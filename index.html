@@ -152,15 +152,6 @@
         .credit a:hover {
             text-decoration: underline;
         }
-
-        #cat {
-            position: fixed;
-            top: -16px;
-            left: -16px;
-            font-size: 2rem;
-            pointer-events: none;
-            z-index: 9999;
-        }
     </style>
 </head>
 <body>
@@ -192,36 +183,6 @@
         </div>
     </main>
 
-    <div id="cat">🐈</div>
-    <script>
-        const cat = document.getElementById('cat');
-        let mouseX = 0, mouseY = 0;
-        let catX = window.innerWidth / 2, catY = window.innerHeight / 2;
-
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
-
-        function animateCat() {
-            catX += (mouseX - catX) * 0.05;
-            catY += (mouseY - catY) * 0.05;
-            
-            const scaleX = mouseX < catX ? -1 : 1;
-            const isMoving = Math.abs(mouseX - catX) > 10 || Math.abs(mouseY - catY) > 10;
-            const bounce = isMoving ? Math.sin(Date.now() / 50) * 5 : 0;
-            
-            if (isMoving) {
-                cat.textContent = '🐈';
-            } else {
-                cat.textContent = '🐱';
-            }
-
-            cat.style.transform = `translate(${catX}px, ${catY + bounce}px) scaleX(${scaleX})`;
-            
-            requestAnimationFrame(animateCat);
-        }
-        animateCat();
-    </script>
+    <script src="./oneko.js"></script>
 </body>
 </html>
