@@ -1,11 +1,7 @@
 // oneko.js: https://github.com/adryd325/oneko.js
 
 (function oneko() {
-  const isReducedMotion =
-    window.matchMedia(`(prefers-reduced-motion: reduce)`) === true ||
-    window.matchMedia(`(prefers-reduced-motion: reduce)`).matches === true;
-
-  if (isReducedMotion) return;
+  // Reduced motion check removed to allow the cat to spawn unconditionally
 
   const nekoEl = document.createElement("div");
   let persistPosition = true;
