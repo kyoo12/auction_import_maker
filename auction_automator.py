@@ -1,44 +1,96 @@
 import os
+import glob
 import pandas as pd
 import numpy as np
 
-#pip install -r requirements.txt
-
 # ==========================================
-# 1. CONFIGURATION (Change these per auction!)
-# ==========================================
-SELLER_NUM = "159"          # Your specific seller number
-LOCATION = "166"           # The location of the items
-VAT_PERCENTAGE = 20        # The VAT percentage
-
-# Language Options: 'en', 'de', 'fr', 'nl', 'it', 'es', 'sv'
-TARGET_LANGUAGE = "en"         
-
-# The file you got from the auction (Updated to match your screenshot)
-FILE_NAME = 'Wollsdorf_Leder .xlsx'
-
-
-# ==========================================
-# 2. DO NOT TOUCH - THE AUTOMATION ENGINE
+# 1. CONFIGURATION LOADING
 # ==========================================
 
-# --- NEW: Tell Python to look in the script's current folder ---
 script_dir = os.path.dirname(os.path.abspath(__file__))
-SOURCE_FILE = os.path.join(script_dir, FILE_NAME)
+config_file = os.path.join(script_dir, 'config.txt')
+
+# Default Configuration
+config = {
+    'SELLER_NUM': '159',
+    'LOCATION': '166',
+    'VAT_PERCENTAGE': '20',
+    'TARGET_LANGUAGE': 'en'
+}
+
+# Create config.txt if it doesn't exist
+if not os.path.exists(config_file):
+    print("Creating default config.txt...")
+    with open(config_file, 'w') as f:
+        f.write("# Auction Automator Configuration\n")
+        f.write("# You can change these values. Do not add spaces around the equals sign.\n")
+        for key, value in config.items():
+            f.write(f"{key}={value}\n")
+else:
+    # Read existing config
+    print("Loading settings from config.txt...")
+    with open(config_file, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#'):
+                key, value = line.split('=', 1)
+                config[key.strip()] = value.strip()
+
+SELLER_NUM = config.get('SELLER_NUM', '159')
+LOCATION = config.get('LOCATION', '166')
+VAT_PERCENTAGE = config.get('VAT_PERCENTAGE', '20')
+TARGET_LANGUAGE = config.get('TARGET_LANGUAGE', 'en')
+
+
+# ==========================================
+# 2. DYNAMIC FILE DETECTION
+# ==========================================
+
+# Find all .xlsx files in the directory
+all_xlsx = glob.glob(os.path.join(script_dir, '*.xlsx'))
+
+# Filter out the template and already generated files
+valid_dumps = [
+    f for f in all_xlsx 
+    if not os.path.basename(f).startswith('lot_import_') 
+    and 'template' not in os.path.basename(f).lower()
+    and not os.path.basename(f).startswith('~$') # Ignore open Excel temp files
+]
+
+if len(valid_dumps) == 0:
+    print("\nERROR: Could not find any raw auction excel dump.")
+    print(f"Please place your Excel file in this folder: {script_dir}")
+    print("Make sure it is an .xlsx file and NOT named 'lot_import_...'")
+    input("\nPress Enter to exit...")
+    exit()
+elif len(valid_dumps) > 1:
+    print("\nERROR: Found multiple possible raw auction files:")
+    for f in valid_dumps:
+        print(f" - {os.path.basename(f)}")
+    print("\nPlease keep ONLY ONE raw auction file in the folder so I know which one to process.")
+    input("\nPress Enter to exit...")
+    exit()
+
+SOURCE_FILE = valid_dumps[0]
+FILE_NAME = os.path.basename(SOURCE_FILE)
 
 # Automatically generate the output file name in the same folder
 base_name = os.path.splitext(FILE_NAME)[0].strip()
 OUTPUT_FILE = os.path.join(script_dir, f'lot_import_{base_name}.xlsx')
 
-print(f"Loading data from {SOURCE_FILE}...")
+
+# ==========================================
+# 3. THE AUTOMATION ENGINE
+# ==========================================
+
+print(f"Processing data from: {FILE_NAME}...")
 
 try:
     # Load the source data
     df_dump = pd.read_excel(SOURCE_FILE, sheet_name='Lots')
-except FileNotFoundError:
-    print(f"\nERROR: Could not find the file '{FILE_NAME}'.")
-    print(f"I am looking for it right here: {SOURCE_FILE}")
-    print("Make sure the Excel file is in that exact folder and the name matches perfectly!\n")
+except Exception as e:
+    print(f"\nERROR reading the Excel file: {e}")
+    input("\nPress Enter to exit...")
     exit()
 
 # Create a fresh, empty dataframe for our target data
