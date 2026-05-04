@@ -96,17 +96,21 @@
     }
   
     if (persistPosition) {
-      let storedNeko = JSON.parse(window.localStorage.getItem("oneko"));
-      if (storedNeko !== null) {
-        nekoPosX = storedNeko.nekoPosX;
-        nekoPosY = storedNeko.nekoPosY;
-        mousePosX = storedNeko.mousePosX;
-        mousePosY = storedNeko.mousePosY;
-        frameCount = storedNeko.frameCount;
-        idleTime = storedNeko.idleTime;
-        idleAnimation = storedNeko.idleAnimation;
-        idleAnimationFrame = storedNeko.idleAnimationFrame;
-        nekoEl.style.backgroundPosition = storedNeko.bgPos;
+      try {
+        let storedNeko = JSON.parse(window.localStorage.getItem("oneko"));
+        if (storedNeko !== null) {
+          nekoPosX = storedNeko.nekoPosX;
+          nekoPosY = storedNeko.nekoPosY;
+          mousePosX = storedNeko.mousePosX;
+          mousePosY = storedNeko.mousePosY;
+          frameCount = storedNeko.frameCount;
+          idleTime = storedNeko.idleTime;
+          idleAnimation = storedNeko.idleAnimation;
+          idleAnimationFrame = storedNeko.idleAnimationFrame;
+          nekoEl.style.backgroundPosition = storedNeko.bgPos;
+        }
+      } catch (e) {
+        // Ignore localStorage errors
       }
     }
   
@@ -132,17 +136,21 @@
     
     if (persistPosition) {
       window.addEventListener("beforeunload", function (event) {
-        window.localStorage.setItem("oneko", JSON.stringify({
-          nekoPosX: nekoPosX,
-          nekoPosY: nekoPosY,
-          mousePosX: mousePosX,
-          mousePosY: mousePosY,
-          frameCount: frameCount,
-          idleTime: idleTime,
-          idleAnimation: idleAnimation,
-          idleAnimationFrame: idleAnimationFrame,
-          bgPos: nekoEl.style.backgroundPosition
-        }));
+        try {
+          window.localStorage.setItem("oneko", JSON.stringify({
+            nekoPosX: nekoPosX,
+            nekoPosY: nekoPosY,
+            mousePosX: mousePosX,
+            mousePosY: mousePosY,
+            frameCount: frameCount,
+            idleTime: idleTime,
+            idleAnimation: idleAnimation,
+            idleAnimationFrame: idleAnimationFrame,
+            bgPos: nekoEl.style.backgroundPosition
+          }));
+        } catch (e) {
+          // Ignore localStorage errors
+        }
       });
     }
     
