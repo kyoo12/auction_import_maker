@@ -1,0 +1,208 @@
+---
+tags:
+  - project
+  - index
+  - design
+  - reference
+date_created: 2026-05-04
+date_modified:
+  - 2026-05-04
+status: active
+tier: 1
+area: tools
+gitrepo:
+github_url:
+last_triage: never
+last_triage_commit: none
+last_maintenance: never
+last_maintenance_commit: none
+last_changed: 2026-05-04
+---
+
+# design-inspo — Project Index
+
+## Overview
+
+**What:** A living reference collection of inspiring landing pages and small sites — primarily Mac apps, developer tools, and minimal one-pagers. Curated as we work, to inform future design decisions.
+**Why:** Avoid starting from scratch every time we design a page. Build taste vocabulary over time.
+**Status:** Active — adding entries as we encounter them. Currently scoped to mdpreview landing page context.
+
+area:: tools
+started:: [[2026-05-04]]
+session:: [[2026-05-04]]
+
+---
+
+## How to Use This Index
+
+Each entry has:
+- **URL** — source
+- **Vibe** — 3-word gut feel
+- **Palette** — key colors
+- **Type** — fonts used
+- **What to steal** — the specific thing worth borrowing
+- **Tags** — `mac-app` / `cli` / `minimal` / `dark` / `warm` / `monospace` / `one-pager` / `interactive`
+
+---
+
+## The Collection
+
+### 1. typer.space
+**URL:** https://typer.space/
+**Vibe:** warm, earthy, approachable
+**Palette:** Cream bg `#EBE2D7`, dark brown text `#342618`, soft warm tones throughout
+**Type:** SF Pro / ui-rounded / Nunito — system font stack with round feel
+**CTA:** "Download for Mac" (dark button) + "Join the waitlist" (outline)
+**What to steal:** The warm beige palette is unusually soft for a Mac app — feels premium without being cold. `ui-rounded` font stack gives it personality with zero custom font load. Buttons with `border-radius: 12px` feel modern-native.
+**Tags:** `mac-app` `warm` `minimal` `light`
+
+---
+
+### 2. conductor.build
+**URL:** https://www.conductor.build/
+**Vibe:** stark, developer, no-nonsense
+**Palette:** Pure white bg `#FFFFFF`, near-black text `#2C2826`, zero color
+**Type:** Geist + SF Mono — full monospace stack
+**CTA:** "Download Conductor" (dark) + "Learn how it works" (outline)
+**What to steal:** Zero border-radius on everything. Full monospace typography including body copy. Extremely confident — the tool sells itself, the page just gets out of the way. Tailwind-based. Great reference for CLI/developer tool aesthetic.
+**Tags:** `mac-app` `cli` `monospace` `minimal` `stark` `dark-adjacent`
+
+---
+
+### 3. onepagelove.com/backups?file=2025-07-29-monotype
+**URL:** https://onepagelove.com/backups?file=2025-07-29-monotype
+**Vibe:** retro, focused, typewriter
+**Palette:** Pure white `#FFFFFF`, black `#000000` — nothing else
+**Type:** Times New Roman for everything, 16px flat across all headings and body
+**CTA:** None visible — pure product showcase
+**What to steal:** Times New Roman used confidently as a *design choice*, not a fallback. Equal font size across all hierarchy levels — the structure comes from spacing and weight, not size. "Retro-inspired digital typewriter designed for flow, focus, and fun." Very tight concept-to-visual alignment.
+**Tags:** `one-pager` `minimal` `retro` `light` `serif`
+
+---
+
+### 4. there.pm
+**URL:** https://there.pm/
+**Vibe:** clean, friendly, Apple-adjacent
+**Palette:** White bg, blue accent `#0070F3` (Apple blue), dark text `#1D1D1F`
+**Type:** SF Pro Text + Reddit Mono — system font with monospace accent
+**CTA:** Single "Download for macOS" in blue — nothing else
+**What to steal:** Maximum restraint: one CTA, one color, nothing competing. Reddit Mono used for secondary code/data display adds just enough technical texture.
+**Tags:** `mac-app` `minimal` `light` `single-cta`
+
+---
+
+### 5. tryklack.com
+**URL:** https://tryklack.com/
+**Vibe:** playful, warm, satisfying
+**Palette:** Warm cream bg `#FFF7ED`, dark stone `#292524`, teal accent `#00BBA7`
+**Type:** System sans-serif — ui-sans-serif stack
+**h1 size:** 96px — very large, confident
+**CTA:** "Mac App Store" (dark pill, shadow) + "FAQs" (light pill)
+**What to steal:** The 96px hero headline is bold without being aggressive. `border-radius: 16px` on buttons with a real drop shadow — subtle but adds depth. Warm cream is the best non-white warm background palette in this collection. The teal accent is surprising and fun without ruining the warmth.
+**Tags:** `mac-app` `warm` `playful` `one-pager` `light`
+
+---
+
+### 6. hot-corners.com
+**URL:** https://hot-corners.com/
+**Vibe:** retro Mac, nostalgic, opinionated
+**Palette:** Dark bg `#252022`, yellow `#FCC442`, green `#519553`, red `#ED5056`
+**Type:** ChicagoFLF (classic Mac OS 9 font!) + Geneva + Courier + monospace
+**What to steal:** ChicagoFLF is a bold personality choice — immediately signals "Mac native" to anyone who recognizes it. Dark background with traffic-light color accents feels very on-brand for a hot corners app. Not directly applicable to mdpreview but a useful reference for opinionated retro design.
+**Tags:** `mac-app` `dark` `retro` `opinionated`
+
+---
+
+### 7. contrasteapp.com
+**URL:** https://contrasteapp.com/
+**Vibe:** refined, dark, editorial
+**Palette:** Deep navy bg `#10151E`, warm gold accent `#E7C296`, no other colors
+**Type:** Times New Roman + HelveticaNeue — serif/sans pairing
+**CTA:** "Download Contraste for free" (gold button, soft shadow)
+**What to steal:** Dark background with a single warm gold accent is a surprisingly elegant combination. The serif/sans pairing feels editorial and considered. The gold CTA button with `rgba(0,0,0,0.15) 0px 8px 16px` shadow is worth copying exactly.
+**Tags:** `mac-app` `dark` `warm` `serif` `refined`
+
+---
+
+### 8. onepagelove.com/shiori
+**URL:** https://onepagelove.com/shiori
+**Vibe:** clean, minimal, read-it-later
+**Palette:** White, warm brown accents
+**Type:** Geist / system sans
+**What to steal:** Looping product demo as the hero — shows the product in action instead of a static screenshot. OPL describes it as "clean as a whistle" — URLs transform to bookmarks in the demo. The looping animation is the entire pitch.
+**Tags:** `mac-app` `minimal` `light` `product-demo`
+
+---
+
+### 9. onepagelove.com/twizzy
+**URL:** https://onepagelove.com/twizzy
+**Vibe:** interactive, clever, delightful
+**Palette:** Warm `#F7F4F3` bg, warm brown tones
+**Type:** Geist / system sans
+**What to steal:** Day/night color scheme switcher built into the page. Real-time clock displayed in a menu bar mockup. Discount Easter Egg hidden in the toggle. Interactive elements make the page memorable. Reference for "clever small touches."
+**Tags:** `mac-app` `interactive` `warm` `one-pager`
+
+---
+
+### 10. pixelsnap.com
+**URL:** https://pixelsnap.com/
+**Vibe:** clean, designer-tool, confident
+**Palette:** White bg, red accent `#FF565B`, dark text `#0E0C1B`
+**Type:** Inter + SF Pro Display
+**CTA:** "Buy now" + "Watch the video"
+**What to steal:** Two-CTA pattern works here: transactional ("Buy now") + soft ("Watch the video"). Red accent is bold but restrained to just the CTA and logo. Good example of a paid tool that doesn't feel pushy.
+**Tags:** `mac-app` `light` `minimal` `two-cta`
+
+---
+
+### 11. onepagelove.com/stockmagic-for-mac
+**URL:** https://onepagelove.com/stockmagic-for-mac
+**Vibe:** interactive, launch, menu-bar app
+**Palette:** Warm `#F7F4F3`, warm brown tones
+**What to steal:** Interactive product demo in the hero — user can trigger the app's core flow directly on the page. Random background image on load keeps it fresh. Good reference for "launch/waitlist" page pattern.
+**Tags:** `mac-app` `interactive` `warm` `launch-page`
+
+---
+
+### 12. onepagelove.com/characters-mac-app
+**URL:** https://onepagelove.com/characters-mac-app
+**Vibe:** animated, distinctive, first-impression
+**Palette:** White, minimal
+**What to steal:** Load transition against a moving background creates a strong first impression. OPL calls it "very original." The animation *is* the first impression — not the copy. Reference for: what if the transition is the hook?
+**Tags:** `mac-app` `animated` `light` `first-impression`
+
+---
+
+### 13. celinekeomany.com (video reference)
+**URL:** https://x.com/celinekeomany/status/2050458969945055272
+**Video:** `/Users/reut/Downloads/Twitter Video Download.mp4`
+**Vibe:** editorial, monospace, ghost
+**Palette:** Near-white bg, very faint gray text — almost ghosted. Red dot accent (small, used sparingly).
+**Type:** Full monospace — lowercase everywhere, no hierarchy through size
+**Nav:** Pill-shaped dark floating nav centered at top — `notes / projects / work / chat` — only interactive element visible in the hero
+**Texture:** Faint `+` grid pattern across the page — barely visible, adds depth without noise
+**Layout:** Centered text block, massive negative space, "explore ↓" as the only CTA (underlined, no button)
+**What to steal:** The `+` grid texture is a distinctive touch that adds depth without competing with content. Full lowercase monospace with no size hierarchy — everything reads as equal weight. The pill nav is the dominant visual element despite being small. Extreme restraint: if you removed any one element, the page would lose its character.
+**Tags:** `portfolio` `monospace` `minimal` `ghost` `texture` `pill-nav`
+
+---
+
+## mdpreview Priority Picks — [[2026-05-04]]
+
+For the mdpreview landing page, these 5 are the most relevant:
+
+| Site | Why it's relevant |
+|---|---|
+| **typer.space** | Same target user (Mac power user), warm palette feels premium without trying too hard, system fonts = zero load |
+| **conductor.build** | CLI/developer tool, full monospace, zero decoration — credibility through restraint |
+| **onepagelove/monotype** | Times New Roman as a *choice* is bold. If mdpreview leans into the "markdown = writing = text" angle, serif could work |
+| **tryklack.com** | Best warm palette in the collection. 96px headline is a good signal for confidence. Pill CTAs with shadow. |
+| **celinekeomany (video)** | The `+` grid texture + pill nav + monospace + extreme whitespace is the most distinctive combination. Adaptable to a tool page if the tone is right. |
+
+**Emerging direction for mdpreview:** Warm neutral bg (Klack's `#FFF7ED` or Typer's `#EBE2D7`), full system font or monospace, single CTA, one or two "what to steal" moves from Celine's site (pill nav shape, texture hint). No dark mode needed at launch.
+
+---
+
+## Log
+
+- **[[2026-05-04]]** Collection created. 13 sites documented from session with Reut. Priority focus on mdpreview landing page. [GENESIS:Session]
