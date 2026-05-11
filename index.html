@@ -558,7 +558,7 @@
                 <div class="file-icon dump" id="icon-dump"></div>
                 <div class="file-icon output" id="icon-output" style="display: none;"></div>
                 <div class="tom-speech-bubble" id="tom-speech-bubble">NUM NUM!</div>
-                <img src="./tom_open.png?v=4" class="tom-head" id="tom-head-img" alt="Tom">
+                <img src="./tom_open.png?v=5" class="tom-head" id="tom-head-img" alt="Tom">
                 <div class="anim-label" id="anim-label">Eating files...</div>
             </div>
 
@@ -715,20 +715,20 @@
                 const isMouthOpen = biteIndex % 2 === 0;
                 
                 if (processingDone && !hasErrored && tomX > 420) {
-                    tomHeadImg.src = './tom_relief.png?v=4';
+                    tomHeadImg.src = './tom_relief.png?v=5';
                     tomBubble.textContent = "YAM!";
                     tomBubble.className = 'tom-speech-bubble yam';
                     tomBubble.style.opacity = '1';
                     tomBubble.style.transform = 'scale(1.15) rotate(2deg)';
                 } else if (tomX > 180 && tomX <= 420) {
-                    tomHeadImg.src = isMouthOpen ? './tom_open.png?v=4' : './tom_closed.png?v=4';
+                    tomHeadImg.src = isMouthOpen ? './tom_open.png?v=5' : './tom_closed.png?v=5';
                     tomBubble.textContent = "NUM NUM!";
                     tomBubble.className = 'tom-speech-bubble num-num';
                     tomBubble.style.opacity = '1';
                     // Active chomp tilt bounce
                     tomBubble.style.transform = isMouthOpen ? 'scale(1.05) rotate(-3deg)' : 'scale(0.95) rotate(3deg)';
                 } else {
-                    tomHeadImg.src = isMouthOpen ? './tom_open.png?v=4' : './tom_closed.png?v=4';
+                    tomHeadImg.src = isMouthOpen ? './tom_open.png?v=5' : './tom_closed.png?v=5';
                     tomBubble.style.opacity = '0';
                     tomBubble.style.transform = 'scale(0) translateY(10px)';
                 }

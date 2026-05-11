@@ -150,6 +150,12 @@ class AutomatorApp(tk.Tk):
                 try:
                     img = Image.open(path)
                     img = img.resize((128, 128), Image.Resampling.LANCZOS)
+                    
+                    # Create a solid warm cream background matching "#FFF7ED" exactly (R=255, G=247, B=237)
+                    bg = Image.new("RGBA", img.size, (255, 247, 237, 255))
+                    # Composite transparent portrait over the solid background to bypass any Tkinter transparency bugs
+                    img = Image.alpha_composite(bg, img.convert("RGBA"))
+                    
                     return ImageTk.PhotoImage(img)
                 except Exception:
                     pass
