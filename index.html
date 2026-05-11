@@ -589,25 +589,28 @@
             iconDump.style.transform = 'scale(1)';
             iconOutput.style.display = 'none';
             
-            let tomX = -80;
+            const duration = 10000; // Exactly 10 seconds
+            const startX = -80;
             const finalX = 500;
-            let frame = 0;
+            let startTime = null;
             let processingDone = false;
             let outputBlob = null;
             let hasErrored = false;
 
-            function animate() {
-                tomX += 4;
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsed = timestamp - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // Calculate exact position based on elapsed time (linear progress)
+                const tomX = startX + (finalX - startX) * progress;
                 tomHeadImg.style.left = tomX + 'px';
                 
-                // Toggle mouth open/closed every 8 steps
-                frame++;
-                if (frame % 8 === 0) {
-                    const isMouthOpen = tomHeadImg.src.includes('tom_open.png');
-                    tomHeadImg.src = isMouthOpen ? './tom_closed.png' : './tom_open.png';
-                }
+                // Toggle mouth open/closed every 200ms
+                const isMouthOpen = Math.floor(elapsed / 200) % 2 === 0;
+                tomHeadImg.src = isMouthOpen ? './tom_open.png' : './tom_closed.png';
 
-                // Collision with file 1 (Template) at X=220
+                // Collision with file 1 (Template) at X=218
                 if (tomX > 218 && iconTemplate.style.opacity !== '0') {
                     iconTemplate.style.opacity = '0';
                     iconTemplate.style.transform = 'scale(0)';
@@ -620,7 +623,7 @@
                     animLabel.textContent = "Processing...";
                     
                     // Run actual Excel conversion inside the animation loop!
-                    setTimeout(() => {
+                    if (!processingDone && !hasErrored) {
                         try {
                             outputBlob = performExcelRemap();
                             processingDone = true;
@@ -629,7 +632,7 @@
                             showToast(err.message || "An error occurred during sheet conversion.");
                             resetToDropzone();
                         }
-                    }, 50);
+                    }
                 }
 
                 // Poop out formatted gold file behind him at X=420
@@ -641,7 +644,7 @@
 
                 // Check bounds
                 if (!hasErrored) {
-                    if (tomX < finalX) {
+                    if (elapsed < duration) {
                         requestAnimationFrame(animate);
                     } else {
                         // Animation finished, show success box
