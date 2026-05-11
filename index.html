@@ -237,6 +237,28 @@
             transition: color 0.3s;
         }
 
+        /* Floating word bubbles */
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(0.8) rotate(var(--rot-start));
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px) scale(1.2) rotate(var(--rot-end));
+            }
+        }
+
+        .chomp-bubble {
+            position: absolute;
+            font-weight: 900;
+            font-size: 0.95rem;
+            color: var(--accent-color);
+            pointer-events: none;
+            z-index: 20;
+            animation: floatUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
         /* Tom Pacman Head */
         .tom-head {
             position: absolute;
@@ -589,7 +611,7 @@
             iconDump.style.transform = 'scale(1)';
             iconOutput.style.display = 'none';
             
-            const duration = 10000; // Exactly 10 seconds
+            const duration = 9000; // Exactly 9 seconds
             const startX = -80;
             const finalX = 500;
             let startTime = null;
@@ -606,30 +628,22 @@
             // Spawns cute floating "num num" bubble text near Tom's head
             function spawnChompBubble(x) {
                 const bubble = document.createElement('div');
+                bubble.className = 'chomp-bubble';
+                
                 const words = ['num!', 'nom!', 'chomp!', 'yum!', 'num num!', 'nom nom!'];
                 bubble.textContent = words[Math.floor(Math.random() * words.length)];
                 
-                bubble.style.position = 'absolute';
-                bubble.style.left = (x + 35) + 'px'; // Slight offset in front of Tom
+                bubble.style.left = (x + 35) + 'px';
                 bubble.style.bottom = (95 + (Math.random() * 20 - 10)) + 'px';
-                bubble.style.color = 'var(--accent-color)';
-                bubble.style.fontWeight = '900';
-                bubble.style.fontSize = '0.9rem';
-                bubble.style.fontFamily = 'inherit';
-                bubble.style.pointerEvents = 'none';
-                bubble.style.opacity = '1';
-                bubble.style.transform = 'scale(0.8) rotate(' + (Math.random() * 20 - 10) + 'deg)';
-                bubble.style.transition = 'all 1.2s cubic-bezier(0.16, 1, 0.3, 1)'; // Super smooth transition
+                
+                // Set native CSS custom properties for hardware-accelerated float rotation
+                bubble.style.setProperty('--rot-start', (Math.random() * 20 - 10) + 'deg');
+                bubble.style.setProperty('--rot-end', (Math.random() * 40 - 20) + 'deg');
                 
                 animContainer.appendChild(bubble);
 
-                // Trigger animation on next paint
-                requestAnimationFrame(() => {
-                    bubble.style.opacity = '0';
-                    bubble.style.transform = 'translateY(-40px) scale(1.1) rotate(' + (Math.random() * 40 - 20) + 'deg)';
-                });
-
-                setTimeout(() => bubble.remove(), 1200);
+                // CSS handles translation/scale/fade natively; we just remove the element after 1s
+                setTimeout(() => bubble.remove(), 1000);
             }
 
             function animate(timestamp) {
