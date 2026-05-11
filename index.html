@@ -254,26 +254,75 @@
             transition: color 0.3s;
         }
 
-        /* Floating word bubbles */
-        @keyframes floatUp {
-            0% {
-                opacity: 1;
-                transform: translateY(0) scale(0.8) rotate(var(--rot-start));
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-50px) scale(1.2) rotate(var(--rot-end));
-            }
+        /* Prominent, readable, comic-style speech bubble */
+        .tom-speech-bubble {
+            position: absolute;
+            bottom: 125px; /* sit perfectly above Tom's head */
+            left: -100px; /* starts off-screen with Tom */
+            background: #FBBF24; /* high-contrast bright warning yellow */
+            border: 3px solid #1C1917; /* strong, pixel-perfect dark border */
+            border-radius: 12px;
+            padding: 8px 16px;
+            font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+            font-weight: 900;
+            font-size: 1rem;
+            color: #1C1917;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 4px 4px 0px rgba(28, 25, 23, 0.2);
+            z-index: 10;
+            white-space: nowrap;
+            opacity: 0;
+            transform: scale(0) translateY(10px);
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.15s ease, background-color 0.2s ease;
         }
 
-        .chomp-bubble {
+        /* Comic pointer tail */
+        .tom-speech-bubble::after {
+            content: '';
             position: absolute;
-            font-weight: 900;
-            font-size: 0.95rem;
-            color: var(--accent-color);
-            pointer-events: none;
-            z-index: 20;
-            animation: floatUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            bottom: -9px;
+            left: 24px;
+            border-width: 9px 9px 0;
+            border-style: solid;
+            border-color: #FBBF24 transparent;
+            display: block;
+            width: 0;
+            transition: border-color 0.2s ease;
+        }
+
+        .tom-speech-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -13px;
+            left: 22px;
+            border-width: 11px 11px 0;
+            border-style: solid;
+            border-color: #1C1917 transparent;
+            display: block;
+            width: 0;
+            z-index: -1;
+        }
+
+        /* Different states for the bubble! */
+        .tom-speech-bubble.num-num {
+            background: #FBBF24; /* Bright Yellow */
+        }
+        .tom-speech-bubble.num-num::after {
+            border-color: #FBBF24 transparent;
+        }
+
+        .tom-speech-bubble.yam {
+            background: #10B981; /* Mint/Emerald Green */
+            color: #FFFFFF;
+            border-color: #064E3B;
+            box-shadow: 4px 4px 0px rgba(6, 78, 59, 0.2);
+        }
+        .tom-speech-bubble.yam::after {
+            border-color: #10B981 transparent;
+        }
+        .tom-speech-bubble.yam::before {
+            border-color: #064E3B transparent;
         }
 
         /* Tom Pacman Head */
@@ -508,7 +557,8 @@
                 <div class="file-icon template" id="icon-template"></div>
                 <div class="file-icon dump" id="icon-dump"></div>
                 <div class="file-icon output" id="icon-output" style="display: none;"></div>
-                <img src="./tom_open.png?v=3" class="tom-head" id="tom-head-img" alt="Tom">
+                <div class="tom-speech-bubble" id="tom-speech-bubble">NUM NUM!</div>
+                <img src="./tom_open.png?v=4" class="tom-head" id="tom-head-img" alt="Tom">
                 <div class="anim-label" id="anim-label">Eating files...</div>
             </div>
 
@@ -545,6 +595,7 @@
         const dlButton = document.getElementById('dl-button');
         const resetLink = document.getElementById('reset-link');
         const tomHeadImg = document.getElementById('tom-head-img');
+        const tomBubble = document.getElementById('tom-speech-bubble');
         const animLabel = document.getElementById('anim-label');
         const iconTemplate = document.getElementById('icon-template');
         const iconDump = document.getElementById('icon-dump');
@@ -643,27 +694,6 @@
                 return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
             }
 
-            // Spawns cute floating "num num" bubble text near Tom's head
-            function spawnChompBubble(x) {
-                const bubble = document.createElement('div');
-                bubble.className = 'chomp-bubble';
-                
-                const words = ['num!', 'nom!', 'chomp!', 'yum!', 'num num!', 'nom nom!'];
-                bubble.textContent = words[Math.floor(Math.random() * words.length)];
-                
-                bubble.style.left = (x + 35) + 'px';
-                bubble.style.bottom = (95 + (Math.random() * 20 - 10)) + 'px';
-                
-                // Set native CSS custom properties for hardware-accelerated float rotation
-                bubble.style.setProperty('--rot-start', (Math.random() * 20 - 10) + 'deg');
-                bubble.style.setProperty('--rot-end', (Math.random() * 40 - 20) + 'deg');
-                
-                animContainer.appendChild(bubble);
-
-                // CSS handles translation/scale/fade natively; we just remove the element after 1s
-                setTimeout(() => bubble.remove(), 1000);
-            }
-
             function animate(timestamp) {
                 if (!startTime) startTime = timestamp;
                 const elapsed = timestamp - startTime;
@@ -676,23 +706,31 @@
                 const tomX = startX + (finalX - startX) * easedProgress;
                 tomHeadImg.style.left = tomX + 'px';
                 
+                // Position speech bubble centered right above his 64px head
+                tomBubble.style.left = (tomX - 10) + 'px';
+                
                 // Energetic mouth biting: toggle every 180ms for a lively, active eating effect
                 const toggleInterval = 180;
                 const biteIndex = Math.floor(elapsed / toggleInterval);
                 const isMouthOpen = biteIndex % 2 === 0;
                 
                 if (processingDone && !hasErrored && tomX > 420) {
-                    tomHeadImg.src = './tom_relief.png?v=3';
+                    tomHeadImg.src = './tom_relief.png?v=4';
+                    tomBubble.textContent = "YAM!";
+                    tomBubble.className = 'tom-speech-bubble yam';
+                    tomBubble.style.opacity = '1';
+                    tomBubble.style.transform = 'scale(1.15) rotate(2deg)';
+                } else if (tomX > 180 && tomX <= 420) {
+                    tomHeadImg.src = isMouthOpen ? './tom_open.png?v=4' : './tom_closed.png?v=4';
+                    tomBubble.textContent = "NUM NUM!";
+                    tomBubble.className = 'tom-speech-bubble num-num';
+                    tomBubble.style.opacity = '1';
+                    // Active chomp tilt bounce
+                    tomBubble.style.transform = isMouthOpen ? 'scale(1.05) rotate(-3deg)' : 'scale(0.95) rotate(3deg)';
                 } else {
-                    tomHeadImg.src = isMouthOpen ? './tom_open.png?v=3' : './tom_closed.png?v=3';
-                }
-
-                // Spawn floating "num!" whenever Tom's mouth closes during the active eating phase
-                if (!isMouthOpen && lastBiteIndex !== biteIndex) {
-                    lastBiteIndex = biteIndex;
-                    if (tomX > 0 && tomX < 440) {
-                        spawnChompBubble(tomX);
-                    }
+                    tomHeadImg.src = isMouthOpen ? './tom_open.png?v=4' : './tom_closed.png?v=4';
+                    tomBubble.style.opacity = '0';
+                    tomBubble.style.transform = 'scale(0) translateY(10px)';
                 }
 
                 // Collision with file 1 (Template) at X=218

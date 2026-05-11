@@ -177,6 +177,11 @@ class AutomatorApp(tk.Tk):
         self.tom_id = self.canvas.create_image(self.tom_x, self.tom_y, image=self.tom_img_open)
         self.processed_file_id = None
         
+        # Speech bubble vector items (hidden initially)
+        self.bubble_pointer = self.canvas.create_polygon([0,0, 0,0, 0,0], fill="#FEF08A", outline="#1C1917", width=2, state=tk.HIDDEN)
+        self.bubble_rect = self.canvas.create_polygon([0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0], fill="#FEF08A", outline="#1C1917", width=2, state=tk.HIDDEN)
+        self.bubble_text = self.canvas.create_text(0, 0, text="NUM NUM!", font=("Arial", 11, "bold"), fill="#1C1917", state=tk.HIDDEN)
+        
         self.script_dir = script_dir
         self.processing_done = False
         self.output_file = None
@@ -189,19 +194,70 @@ class AutomatorApp(tk.Tk):
         # Draw a little document icon
         poly = [x-15, y-20, x+10, y-20, x+15, y-15, x+15, y+20, x-15, y+20]
         return self.canvas.create_polygon(poly, fill=color, outline="#292524", width=2)
+
+    def update_speech_bubble(self, show=True, text="NUM NUM!", bg="#FEF08A", fg="#1C1917", border="#1C1917"):
+        if not show:
+            self.canvas.itemconfig(self.bubble_rect, state=tk.HIDDEN)
+            self.canvas.itemconfig(self.bubble_pointer, state=tk.HIDDEN)
+            self.canvas.itemconfig(self.bubble_text, state=tk.HIDDEN)
+            return
         
+        x, y = self.tom_x, self.tom_y
+        
+        # Update text
+        self.canvas.itemconfig(self.bubble_text, text=text, fill=fg, state=tk.NORMAL)
+        
+        # Get half width based on text length
+        half_w = max(40, len(text) * 4.5 + 10)
+        
+        # Bubble box coordinates (rectangular)
+        box_pts = [
+            x - half_w, y - 68,
+            x + half_w, y - 68,
+            x + half_w, y - 42,
+            x - half_w, y - 42
+        ]
+        
+        # Pointer coordinates (pointing down to Tom's head)
+        pointer_pts = [
+            x - 12, y - 42,
+            x - 2, y - 42,
+            x - 7, y - 34
+        ]
+        
+        self.canvas.coords(self.bubble_rect, *box_pts)
+        self.canvas.coords(self.bubble_pointer, *pointer_pts)
+        self.canvas.coords(self.bubble_text, x, y - 55)
+        
+        self.canvas.itemconfig(self.bubble_rect, fill=bg, outline=border, state=tk.NORMAL)
+        self.canvas.itemconfig(self.bubble_pointer, fill=bg, outline=border, state=tk.NORMAL)
+        
+        # Lift speech bubble above files & mascot
+        self.canvas.tag_raise(self.bubble_rect)
+        self.canvas.tag_raise(self.bubble_pointer)
+        self.canvas.tag_raise(self.bubble_text)
+
     def animate(self):
         # Move Tom right (4 pixels per 40ms = ~7.5 seconds to cross 750 pixels)
         self.tom_x += 4
         
-        # Chomp animation (toggle every 8 frames)
+        # Chomp animation and speech bubble logic
         self.frame_count += 1
         if self.processing_done and not self.error_msg and self.tom_x > 450:
             self.canvas.itemconfig(self.tom_id, image=self.tom_img_relief)
-        elif self.frame_count % 4 == 0:
-            self.is_mouth_open = not self.is_mouth_open
+            self.update_speech_bubble(True, "YAM!", "#10B981", "#FFFFFF", "#064E3B")
+        elif self.tom_x > 200 and self.tom_x <= 450:
+            if self.frame_count % 4 == 0:
+                self.is_mouth_open = not self.is_mouth_open
             new_img = self.tom_img_open if self.is_mouth_open else self.tom_img_closed
             self.canvas.itemconfig(self.tom_id, image=new_img)
+            self.update_speech_bubble(True, "NUM NUM!", "#FEF08A", "#1C1917", "#1C1917")
+        else:
+            if self.frame_count % 4 == 0:
+                self.is_mouth_open = not self.is_mouth_open
+            new_img = self.tom_img_open if self.is_mouth_open else self.tom_img_closed
+            self.canvas.itemconfig(self.tom_id, image=new_img)
+            self.update_speech_bubble(False)
             
         self.canvas.coords(self.tom_id, self.tom_x, self.tom_y)
         
