@@ -596,19 +596,67 @@
             let processingDone = false;
             let outputBlob = null;
             let hasErrored = false;
+            let lastBiteIndex = -1;
+
+            // Professional cubic ease-in-out function
+            function easeInOutCubic(t) {
+                return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            }
+
+            // Spawns cute floating "num num" bubble text near Tom's head
+            function spawnChompBubble(x) {
+                const bubble = document.createElement('div');
+                const words = ['num!', 'nom!', 'chomp!', 'yum!', 'num num!', 'nom nom!'];
+                bubble.textContent = words[Math.floor(Math.random() * words.length)];
+                
+                bubble.style.position = 'absolute';
+                bubble.style.left = (x + 35) + 'px'; // Slight offset in front of Tom
+                bubble.style.bottom = (95 + (Math.random() * 20 - 10)) + 'px';
+                bubble.style.color = 'var(--accent-color)';
+                bubble.style.fontWeight = '900';
+                bubble.style.fontSize = '0.9rem';
+                bubble.style.fontFamily = 'inherit';
+                bubble.style.pointerEvents = 'none';
+                bubble.style.opacity = '1';
+                bubble.style.transform = 'scale(0.8) rotate(' + (Math.random() * 20 - 10) + 'deg)';
+                bubble.style.transition = 'all 1.2s cubic-bezier(0.16, 1, 0.3, 1)'; // Super smooth transition
+                
+                animContainer.appendChild(bubble);
+
+                // Trigger animation on next paint
+                requestAnimationFrame(() => {
+                    bubble.style.opacity = '0';
+                    bubble.style.transform = 'translateY(-40px) scale(1.1) rotate(' + (Math.random() * 40 - 20) + 'deg)';
+                });
+
+                setTimeout(() => bubble.remove(), 1200);
+            }
 
             function animate(timestamp) {
                 if (!startTime) startTime = timestamp;
                 const elapsed = timestamp - startTime;
-                const progress = Math.min(elapsed / duration, 1);
+                const rawProgress = Math.min(elapsed / duration, 1);
+                
+                // Apply professional cubic easing for smooth start and slow-down finish
+                const easedProgress = easeInOutCubic(rawProgress);
 
-                // Calculate exact position based on elapsed time (linear progress)
-                const tomX = startX + (finalX - startX) * progress;
+                // Calculate exact position based on elapsed eased time
+                const tomX = startX + (finalX - startX) * easedProgress;
                 tomHeadImg.style.left = tomX + 'px';
                 
-                // Toggle mouth open/closed every 200ms
-                const isMouthOpen = Math.floor(elapsed / 200) % 2 === 0;
+                // Slow down mouth biting: toggle every 350ms
+                const toggleInterval = 350;
+                const biteIndex = Math.floor(elapsed / toggleInterval);
+                const isMouthOpen = biteIndex % 2 === 0;
                 tomHeadImg.src = isMouthOpen ? './tom_open.png' : './tom_closed.png';
+
+                // Spawn floating "num!" whenever Tom's mouth closes during the active eating phase
+                if (!isMouthOpen && lastBiteIndex !== biteIndex) {
+                    lastBiteIndex = biteIndex;
+                    if (tomX > 0 && tomX < 440) {
+                        spawnChompBubble(tomX);
+                    }
+                }
 
                 // Collision with file 1 (Template) at X=218
                 if (tomX > 218 && iconTemplate.style.opacity !== '0') {
