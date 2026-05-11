@@ -198,7 +198,7 @@ class AutomatorApp(tk.Tk):
         self.frame_count += 1
         if self.processing_done and not self.error_msg and self.tom_x > 450:
             self.canvas.itemconfig(self.tom_id, image=self.tom_img_relief)
-        elif self.frame_count % 8 == 0:
+        elif self.frame_count % 4 == 0:
             self.is_mouth_open = not self.is_mouth_open
             new_img = self.tom_img_open if self.is_mouth_open else self.tom_img_closed
             self.canvas.itemconfig(self.tom_id, image=new_img)

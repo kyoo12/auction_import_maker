@@ -508,7 +508,7 @@
                 <div class="file-icon template" id="icon-template"></div>
                 <div class="file-icon dump" id="icon-dump"></div>
                 <div class="file-icon output" id="icon-output" style="display: none;"></div>
-                <img src="./tom_open.png" class="tom-head" id="tom-head-img" alt="Tom">
+                <img src="./tom_open.png?v=3" class="tom-head" id="tom-head-img" alt="Tom">
                 <div class="anim-label" id="anim-label">Eating files...</div>
             </div>
 
@@ -676,15 +676,15 @@
                 const tomX = startX + (finalX - startX) * easedProgress;
                 tomHeadImg.style.left = tomX + 'px';
                 
-                // Slow down mouth biting: toggle every 350ms
-                const toggleInterval = 350;
+                // Energetic mouth biting: toggle every 180ms for a lively, active eating effect
+                const toggleInterval = 180;
                 const biteIndex = Math.floor(elapsed / toggleInterval);
                 const isMouthOpen = biteIndex % 2 === 0;
                 
                 if (processingDone && !hasErrored && tomX > 420) {
-                    tomHeadImg.src = './tom_relief.png';
+                    tomHeadImg.src = './tom_relief.png?v=3';
                 } else {
-                    tomHeadImg.src = isMouthOpen ? './tom_open.png' : './tom_closed.png';
+                    tomHeadImg.src = isMouthOpen ? './tom_open.png?v=3' : './tom_closed.png?v=3';
                 }
 
                 // Spawn floating "num!" whenever Tom's mouth closes during the active eating phase
