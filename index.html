@@ -680,7 +680,12 @@
                 const toggleInterval = 350;
                 const biteIndex = Math.floor(elapsed / toggleInterval);
                 const isMouthOpen = biteIndex % 2 === 0;
-                tomHeadImg.src = isMouthOpen ? './tom_open.png' : './tom_closed.png';
+                
+                if (processingDone && !hasErrored && tomX > 420) {
+                    tomHeadImg.src = './tom_relief.png';
+                } else {
+                    tomHeadImg.src = isMouthOpen ? './tom_open.png' : './tom_closed.png';
+                }
 
                 // Spawn floating "num!" whenever Tom's mouth closes during the active eating phase
                 if (!isMouthOpen && lastBiteIndex !== biteIndex) {

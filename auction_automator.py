@@ -156,6 +156,7 @@ class AutomatorApp(tk.Tk):
 
         self.tom_img_open = load_img("tom_open.png")
         self.tom_img_closed = load_img("tom_closed.png")
+        self.tom_img_relief = load_img("tom_relief.png")
         self.is_mouth_open = True
         self.frame_count = 0
 
@@ -195,7 +196,9 @@ class AutomatorApp(tk.Tk):
         
         # Chomp animation (toggle every 8 frames)
         self.frame_count += 1
-        if self.frame_count % 8 == 0:
+        if self.processing_done and not self.error_msg and self.tom_x > 450:
+            self.canvas.itemconfig(self.tom_id, image=self.tom_img_relief)
+        elif self.frame_count % 8 == 0:
             self.is_mouth_open = not self.is_mouth_open
             new_img = self.tom_img_open if self.is_mouth_open else self.tom_img_closed
             self.canvas.itemconfig(self.tom_id, image=new_img)
