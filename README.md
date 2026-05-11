@@ -6,32 +6,33 @@ Built by [Pixel 'n' Mesh](https://pixel-n-mesh.lovable.app).
 
 ## 🚀 Features
 
-- **Drag-and-Drop Simple**: No command-line experience required.
-- **One-Time Install**: Automatically checks for and installs dependencies (`pandas`, `numpy`, `openpyxl`) only when needed.
-- **Dynamic File Detection**: Put any raw `.xlsx` file in the folder and the script will automatically detect and process it.
-- **Accessible Configuration**: Hardcoded variables are stored in an auto-generated `config.txt` file that anyone can edit in Notepad.
-- **Cross-Platform**: Includes launcher scripts for both Windows (`run.bat`) and Mac (`run.command`).
+- **Animated GUI**: A fun chomping animation plays instead of a boring command line.
+- **No Console Window**: Launches silently in the background on both Windows and Mac.
+- **One-Time Install**: Automatically checks for and installs all dependencies on first run.
+- **Dynamic File Detection**: Put any raw `.xlsx` file in the folder — the script finds and processes it automatically.
+- **Pre-Configured**: `config.txt` is included in the package. Edit it before running to set your Seller Number, VAT, and Location.
+- **Cross-Platform**: Includes launcher scripts for Windows (`run.bat`) and Mac (`run.command`).
 
 ## 📥 How to Use
 
-1. **Download the Package**: Grab the latest `.zip` package from the [Landing Page](https://kyoo12.github.io/auction_import_maker/).
+1. **Download the Package**: Grab the latest `.zip` from the [Landing Page](https://kyoo12.github.io/auction_import_maker/).
 2. **Extract**: Unzip the package into an empty folder.
-3. **Add Data**: Place exactly **one** raw auction excel dump (`.xlsx`) into the folder. The file name doesn't matter.
-4. **Run**:
+3. **Configure** *(optional)*: Open `config.txt` in any text editor and set your `SELLER_NUM`, `LOCATION`, `VAT_PERCENTAGE`, and `TARGET_LANGUAGE`.
+4. **Add Data**: Place exactly **one** raw auction excel dump (`.xlsx`) into the folder.
+5. **Run**:
    - **Windows**: Double-click `run.bat`
-   - **Mac**: Double-click `run.command` (right-click and select "Open" on first use)
-5. **Get Results**: The script will instantly generate your formatted template as `lot_import_[OriginalName].xlsx`!
+   - **Mac**: Double-click `run.command` (right-click → "Open" on first use to bypass Gatekeeper)
+6. **Get Results**: The animated GUI will appear, Tom will eat your files, and the formatted template `lot_import_[OriginalName].xlsx` will be generated!
 
 ## ⚙️ Configuration
-The first time you run the script, it will create a `config.txt` file. You can open this file in any text editor to modify the default values:
-- `SELLER_NUM`
-- `LOCATION`
-- `VAT_PERCENTAGE`
-- `TARGET_LANGUAGE`
+Edit `config.txt` (included in the package) in any text editor to set your defaults:
+- `SELLER_NUM` — your seller number
+- `LOCATION` — location code
+- `VAT_PERCENTAGE` — VAT rate (e.g. `20`)
+- `TARGET_LANGUAGE` — language code (e.g. `en`, `nl`, `de`)
 
 ## 🛠️ Tech Stack
 - Python 3.x
-- Pandas
-- Numpy
-- Openpyxl
+- Pandas / Numpy / Openpyxl
+- Tkinter + Pillow (GUI & animation)
 - HTML/CSS/JS (Landing Page)

@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 cd "$(dirname "$0")"
 
-if ! python3 -c "import pandas, numpy, openpyxl, PIL" &> /dev/null; then
-    pip3 install -r requirements.txt > /dev/null 2>&1
+# Check and install dependencies (including tkinter for Mac)
+if ! python3 -c "import pandas, numpy, openpyxl, PIL, tkinter" 2>/dev/null; then
+    echo "Installing required packages..."
+    pip3 install pandas numpy openpyxl Pillow
 fi
 
-python3 auction_automator.py &
-exit
+# Launch the GUI app — terminal stays open until animation window closes
+python3 auction_automator.py
