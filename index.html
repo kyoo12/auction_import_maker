@@ -74,6 +74,23 @@
             box-sizing: border-box;
         }
 
+        .dome-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            border-radius: 50%;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border: 3px solid #fff;
+            background-color: #fff;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .dome-logo:hover {
+            transform: scale(1.12) rotate(4deg);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+        }
+
         h1 {
             font-size: 2.75rem;
             font-weight: 700;
@@ -441,6 +458,7 @@
     </nav>
 
     <main>
+        <img src="./dome_logo.png" alt="Dome Auctions Logo" class="dome-logo">
         <h1 id="about">auction automator</h1>
         <p class="subtitle">Convert raw auction excel sheets into clean import templates instantly. Safe, private, and runs entirely on your machine.</p>
 
