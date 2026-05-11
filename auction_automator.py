@@ -1,6 +1,7 @@
 import os
 import glob
 import threading
+import time
 import pandas as pd
 import numpy as np
 import tkinter as tk
@@ -148,11 +149,11 @@ class AutomatorApp(tk.Tk):
             if os.path.exists(path):
                 try:
                     img = Image.open(path)
-                    img = img.resize((64, 64), Image.Resampling.LANCZOS)
+                    img = img.resize((128, 128), Image.Resampling.LANCZOS)
                     return ImageTk.PhotoImage(img)
                 except Exception:
                     pass
-            return tk.PhotoImage(width=64, height=64)
+            return tk.PhotoImage(width=128, height=128)
 
         self.tom_img_open = load_img("tom_open.png")
         self.tom_img_closed = load_img("tom_closed.png")
@@ -164,7 +165,12 @@ class AutomatorApp(tk.Tk):
         self.file_color_dump = "#00BBA7"    # Teal for raw dump
         self.file_color_template = "#6B7280" # Gray for template
         
-        self.tom_x = -50
+        # Easing and timing configuration matching website perfectly
+        self.start_time = time.time()
+        self.duration = 9.0 # Exactly 9 seconds
+        self.start_x = -100
+        self.final_x = 700
+        self.tom_x = self.start_x
         self.tom_y = 100
         
         # Draw track
@@ -210,24 +216,24 @@ class AutomatorApp(tk.Tk):
         # Get half width based on text length
         half_w = max(40, len(text) * 4.5 + 10)
         
-        # Bubble box coordinates (rectangular)
+        # Bubble box coordinates adjusted perfectly for larger 128px Tom
         box_pts = [
-            x - half_w, y - 68,
-            x + half_w, y - 68,
-            x + half_w, y - 42,
-            x - half_w, y - 42
+            x - half_w, y - 104,
+            x + half_w, y - 104,
+            x + half_w, y - 74,
+            x - half_w, y - 74
         ]
         
-        # Pointer coordinates (pointing down to Tom's head)
+        # Pointer coordinates pointing down to Tom's head top at y-64
         pointer_pts = [
-            x - 12, y - 42,
-            x - 2, y - 42,
-            x - 7, y - 34
+            x - 12, y - 74,
+            x - 2, y - 74,
+            x - 7, y - 64
         ]
         
         self.canvas.coords(self.bubble_rect, *box_pts)
         self.canvas.coords(self.bubble_pointer, *pointer_pts)
-        self.canvas.coords(self.bubble_text, x, y - 55)
+        self.canvas.coords(self.bubble_text, x, y - 89)
         
         self.canvas.itemconfig(self.bubble_rect, fill=bg, outline=border, state=tk.NORMAL)
         self.canvas.itemconfig(self.bubble_pointer, fill=bg, outline=border, state=tk.NORMAL)
@@ -238,15 +244,24 @@ class AutomatorApp(tk.Tk):
         self.canvas.tag_raise(self.bubble_text)
 
     def animate(self):
-        # Move Tom right (4 pixels per 40ms = ~7.5 seconds to cross 750 pixels)
-        self.tom_x += 4
+        # Calculate time-based cubic ease-in-out progress matching the web landing page perfectly
+        elapsed = time.time() - self.start_time
+        progress = min(elapsed / self.duration, 1.0)
+        
+        # Cubic ease-in-out formula
+        if progress < 0.5:
+            eased = 4 * progress * progress * progress
+        else:
+            eased = 1 - (-2 * progress + 2)**3 / 2
+            
+        self.tom_x = self.start_x + (self.final_x - self.start_x) * eased
         
         # Chomp animation and speech bubble logic
         self.frame_count += 1
         if self.processing_done and not self.error_msg and self.tom_x > 450:
             self.canvas.itemconfig(self.tom_id, image=self.tom_img_relief)
             self.update_speech_bubble(True, "YAM!", "#10B981", "#FFFFFF", "#064E3B")
-        elif self.tom_x > 200 and self.tom_x <= 450:
+        elif self.tom_x > 120 and self.tom_x <= 450:
             if self.frame_count % 4 == 0:
                 self.is_mouth_open = not self.is_mouth_open
             new_img = self.tom_img_open if self.is_mouth_open else self.tom_img_closed
@@ -261,13 +276,13 @@ class AutomatorApp(tk.Tk):
             
         self.canvas.coords(self.tom_id, self.tom_x, self.tom_y)
         
-        # Eat file 1 (Template)
-        if self.tom_x > 250 and self.file1_id:
+        # Eat file 1 (Template) when Tom's front-edge reaches X=250
+        if self.tom_x > 186 and self.file1_id:
             self.canvas.delete(self.file1_id)
             self.file1_id = None
             
-        # Eat file 2 (Data Dump) and trigger processing
-        if self.tom_x > 350 and self.file2_id:
+        # Eat file 2 (Data Dump) when Tom's front-edge reaches X=350 and trigger processing
+        if self.tom_x > 286 and self.file2_id:
             self.canvas.delete(self.file2_id)
             self.file2_id = None
             self.label.config(text="Processing...")
@@ -290,9 +305,13 @@ class AutomatorApp(tk.Tk):
             self.processed_file_id = self.draw_file(400, 100, "#F59E0B") # Gold color for output
             self.label.config(text="Success! File formatted.")
             
-        if self.tom_x < 700:
+        if elapsed < self.duration:
             self.after(40, self.animate)
         else:
+            # Ensure Tom finishes off-screen
+            self.tom_x = self.final_x
+            self.canvas.coords(self.tom_id, self.tom_x, self.tom_y)
+            
             # Tom has walked off screen — now handle result
             if self.error_msg:
                 messagebox.showerror("Error", self.error_msg)

@@ -257,8 +257,8 @@
         /* Prominent, readable, comic-style speech bubble */
         .tom-speech-bubble {
             position: absolute;
-            bottom: 125px; /* sit perfectly above Tom's head */
-            left: -100px; /* starts off-screen with Tom */
+            bottom: 158px; /* sit perfectly above Tom's 128px head */
+            left: -140px; /* starts off-screen with Tom */
             background: #FBBF24; /* high-contrast bright warning yellow */
             border: 3px solid #1C1917; /* strong, pixel-perfect dark border */
             border-radius: 12px;
@@ -328,10 +328,10 @@
         /* Tom Pacman Head */
         .tom-head {
             position: absolute;
-            width: 64px;
-            height: 64px;
-            bottom: 58px;
-            left: -80px;
+            width: 128px;
+            height: 128px;
+            bottom: 26px;
+            left: -140px;
             z-index: 5;
             transition: transform 0.1s linear;
         }
@@ -681,8 +681,8 @@
             iconOutput.style.display = 'none';
             
             const duration = 9000; // Exactly 9 seconds
-            const startX = -80;
-            const finalX = 500;
+            const startX = -140;
+            const finalX = 540;
             let startTime = null;
             let processingDone = false;
             let outputBlob = null;
