@@ -3,3 +3,4 @@ __pycache__/
 tom_raw.png
 make_placeholder.py
 tom_head.png
+.venv/
