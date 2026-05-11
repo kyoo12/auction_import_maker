@@ -1,0 +1,6 @@
+# Auction Automator Configuration
+# You can change these values. Do not add spaces around the equals sign.
+SELLER_NUM=159
+LOCATION=166
+VAT_PERCENTAGE=20
+TARGET_LANGUAGE=en

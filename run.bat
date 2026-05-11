@@ -1,14 +1,6 @@
 @echo off
-echo Checking dependencies...
-python -c "import pandas, numpy, openpyxl" 2>nul
+python -c "import pandas, numpy, openpyxl, PIL" 2>nul
 if %errorlevel% neq 0 (
-    echo Installing requirements...
-    pip install -r requirements.txt
-) else (
-    echo Dependencies are already installed.
+    pip install -r requirements.txt >nul 2>&1
 )
-echo.
-echo Running Auction Automator...
-python auction_automator.py
-echo.
-pause
+wscript run.vbs
