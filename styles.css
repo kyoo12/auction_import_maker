@@ -492,3 +492,20 @@
             text-decoration: underline;
             cursor: pointer;
         }
+
+.site-footer {
+    margin-top: 2rem;
+    padding-bottom: 2rem;
+    font-size: 0.8rem;
+    opacity: 0.6;
+    text-align: center;
+    width: 100%;
+}
+.site-footer a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: bold;
+}
+.site-footer a:hover {
+    text-decoration: underline;
+}
