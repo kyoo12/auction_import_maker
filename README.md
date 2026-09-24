@@ -15,7 +15,7 @@ No installation, no Python, no security warnings, and 100% private.
 ### Why the Web Converter is Best:
 *   🔒 **100% Private**: All processing runs locally inside your browser memory using WebAssembly/JavaScript. Your auction spreadsheets are **never uploaded** to any server.
 *   ⚡ **Instant & Animated**: Tom plays a smooth 60fps chomping animation using custom portraits, complete with playful, dynamic comic speech bubbles (**`"NUM NUM!"`** and **`"YAM!"`**), and downloads your processed file immediately.
-*   🖥️ **Full Config UI**: Easily set your Seller ID, Location, VAT %, and Target Language using clean inputs directly on the page before converting.
+*   🖥️ **Full Config UI**: Easily set your Seller ID, Location, VAT %, Fee VAT %, and Target Language using clean inputs directly on the page before converting.
 *   📱 **Cross-Platform**: Works perfectly on Windows, macOS, Linux, Chromebooks, and even iPads or tablets.
 
 ---
@@ -32,7 +32,7 @@ If you need to process files offline or want to run the code locally as a Python
 ### How to Use Offline:
 1.  **Download the Package**: Grab `auction_automator_package.zip` from this repository.
 2.  **Extract**: Unzip the package into any empty folder.
-3.  **Configure**: Open `config.txt` in any text editor to set your default `SELLER_NUM`, `LOCATION`, `VAT_PERCENTAGE`, and `TARGET_LANGUAGE`.
+3.  **Configure**: Open `config.txt` in any text editor to set your default `SELLER_NUM`, `LOCATION`, `VAT_PERCENTAGE`, `FEE_VAT_PERCENTAGE`, and `TARGET_LANGUAGE`.
 4.  **Add Data**: Place exactly **one** raw auction Excel dump (`.xlsx`) into the folder.
 5.  **Run**:
     *   **Windows**: Double-click `run.bat` (creates a clean local `.venv` automatically on first launch).

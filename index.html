@@ -528,6 +528,10 @@
                     <input type="number" id="vat-percent" value="20" placeholder="e.g. 20">
                 </div>
                 <div class="input-group">
+                    <label for="fee-vat-percent">Fee VAT %</label>
+                    <input type="number" id="fee-vat-percent" value="2" placeholder="e.g. 2">
+                </div>
+                <div class="input-group">
                     <label for="target-lang">Language</label>
                     <select id="target-lang">
                         <option value="en">English (en)</option>
@@ -537,6 +541,7 @@
                         <option value="it">Italian (it)</option>
                         <option value="es">Spanish (es)</option>
                         <option value="sv">Swedish (sv)</option>
+                        <option value="pl">Polish (pl)</option>
                     </select>
                 </div>
             </div>
@@ -808,6 +813,7 @@
             const sellerNum = document.getElementById('seller-num').value.trim() || '159';
             const location = document.getElementById('location').value.trim() || '166';
             const vatPercentage = document.getElementById('vat-percent').value.trim() || '20';
+            const feeVatPercentage = document.getElementById('fee-vat-percent').value.trim() || '2';
             const targetLang = document.getElementById('target-lang').value;
 
             // Map rows equivalent to Python logic
@@ -815,7 +821,7 @@
                 const outRow = {};
 
                 // Preset language titles/desc to blanks
-                const langs = ['en', 'de', 'fr', 'nl', 'it', 'es', 'sv'];
+                const langs = ['en', 'de', 'fr', 'nl', 'it', 'es', 'sv', 'pl'];
                 langs.forEach(l => {
                     outRow[`title_${l}`] = '';
                     outRow[`description_${l}`] = '';
@@ -828,6 +834,7 @@
                 outRow['number'] = row['Lotnumber'] || '';
                 outRow['starting_bid'] = row['StartingBid'] || '';
                 outRow['vat_percentage'] = vatPercentage;
+                outRow['fee_vat_percentage'] = feeVatPercentage;
                 outRow['estimated_price'] = row['EstimatedPrice'] || '';
                 outRow['reserve_bid'] = row['ReserveBid'] || '';
                 outRow['subcategory'] = row['CategoryDomeId'] || '';
@@ -858,9 +865,9 @@
 
             // Reindex/force column order matching compliant template
             const templateCols = [
-                'title_en', 'title_de', 'title_fr', 'title_nl', 'title_it', 'title_es', 'title_sv', 
-                'number', 'starting_bid', 'vat_percentage', 'description_en', 'description_de', 
-                'description_fr', 'description_nl', 'description_it', 'description_es', 'description_sv', 
+                'title_en', 'title_de', 'title_fr', 'title_nl', 'title_it', 'title_es', 'title_sv', 'title_pl', 
+                'number', 'starting_bid', 'vat_percentage', 'fee_vat_percentage', 'description_en', 'description_de', 
+                'description_fr', 'description_nl', 'description_it', 'description_es', 'description_sv', 'description_pl', 
                 'estimated_price', 'reserve_bid', 'subcategory', 'location', 'seller', 'brand', 
                 'needs_manual_allocation', 'is_spotlight', 'video', 'attribute-type', 'attribute-year', 
                 'attribute-serial_number', 'attribute-amount', 'attribute-buy_amount'

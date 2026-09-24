@@ -19,6 +19,7 @@ def process_auction_data(script_dir):
         'SELLER_NUM': '159',
         'LOCATION': '166',
         'VAT_PERCENTAGE': '20',
+        'FEE_VAT_PERCENTAGE': '2',
         'TARGET_LANGUAGE': 'en'
     }
 
@@ -41,6 +42,7 @@ def process_auction_data(script_dir):
     SELLER_NUM = config.get('SELLER_NUM', '159')
     LOCATION = config.get('LOCATION', '166')
     VAT_PERCENTAGE = config.get('VAT_PERCENTAGE', '20')
+    FEE_VAT_PERCENTAGE = config.get('FEE_VAT_PERCENTAGE', '2')
     TARGET_LANGUAGE = config.get('TARGET_LANGUAGE', 'en')
 
     # Find all .xlsx files in the directory
@@ -89,6 +91,7 @@ def process_auction_data(script_dir):
     df_target['seller'] = SELLER_NUM
     df_target['location'] = LOCATION
     df_target['vat_percentage'] = VAT_PERCENTAGE
+    df_target['fee_vat_percentage'] = FEE_VAT_PERCENTAGE
     df_target['video'] = "" 
 
     def convert_to_binary(val):
@@ -102,9 +105,9 @@ def process_auction_data(script_dir):
         df_target['is_spotlight'] = df_dump['Spotlight'].apply(convert_to_binary)
 
     template_cols = [
-        'title_en', 'title_de', 'title_fr', 'title_nl', 'title_it', 'title_es', 'title_sv', 
-        'number', 'starting_bid', 'vat_percentage', 'description_en', 'description_de', 
-        'description_fr', 'description_nl', 'description_it', 'description_es', 'description_sv', 
+        'title_en', 'title_de', 'title_fr', 'title_nl', 'title_it', 'title_es', 'title_sv', 'title_pl', 
+        'number', 'starting_bid', 'vat_percentage', 'fee_vat_percentage', 'description_en', 'description_de', 
+        'description_fr', 'description_nl', 'description_it', 'description_es', 'description_sv', 'description_pl', 
         'estimated_price', 'reserve_bid', 'subcategory', 'location', 'seller', 'brand', 
         'needs_manual_allocation', 'is_spotlight', 'video', 'attribute-type', 'attribute-year', 
         'attribute-serial_number', 'attribute-amount', 'attribute-buy_amount'
