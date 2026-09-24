@@ -249,20 +249,39 @@ const dropzone = document.getElementById('dropzone');
                     outRow[`description_${l}`] = '';
                 });
 
-                // Populate selected language columns
-                outRow[`title_${targetLang}`] = sanitizeText(row['Title']);
-                outRow[`description_${targetLang}`] = sanitizeText(row['Description']);
+                // Get mapping from schema or fallback to default
+                const mapping = (auctionSchema && auctionSchema.mapping) ? auctionSchema.mapping : {
+                    "title": "Title",
+                    "description": "Description",
+                    "number": "Lotnumber",
+                    "starting_bid": "StartingBid",
+                    "estimated_price": "EstimatedPrice",
+                    "reserve_bid": "ReserveBid",
+                    "subcategory": "CategoryDomeId",
+                    "brand": "Brand",
+                    "attribute-type": "Type",
+                    "attribute-year": "Year",
+                    "attribute-serial_number": "SerialNumber",
+                    "attribute-amount": "Amount",
+                    "attribute-buy_amount": "BuyAmount",
+                    "needs_manual_allocation": "Allocation",
+                    "is_spotlight": "Spotlight"
+                };
 
-                outRow['number'] = row['Lotnumber'] || '';
-                outRow['starting_bid'] = row['StartingBid'] || '';
+                // Populate selected language columns
+                outRow[`title_${targetLang}`] = sanitizeText(row[mapping['title']]);
+                outRow[`description_${targetLang}`] = sanitizeText(row[mapping['description']]);
+
+                outRow['number'] = row[mapping['number']] || '';
+                outRow['starting_bid'] = row[mapping['starting_bid']] || '';
                 outRow['vat_percentage'] = vatPercentage;
                 outRow['fee_vat_percentage'] = feeVatPercentage;
-                outRow['estimated_price'] = row['EstimatedPrice'] || '';
-                outRow['reserve_bid'] = row['ReserveBid'] || '';
-                outRow['subcategory'] = row['CategoryDomeId'] || '';
+                outRow['estimated_price'] = row[mapping['estimated_price']] || '';
+                outRow['reserve_bid'] = row[mapping['reserve_bid']] || '';
+                outRow['subcategory'] = row[mapping['subcategory']] || '';
                 outRow['location'] = location;
                 outRow['seller'] = sellerNum;
-                outRow['brand'] = row['Brand'] || '';
+                outRow['brand'] = row[mapping['brand']] || '';
                 
                 // Allocation / Spotlight conversions
                 const convertToBinary = (val) => {
@@ -272,15 +291,15 @@ const dropzone = document.getElementById('dropzone');
                     return '';
                 };
 
-                outRow['needs_manual_allocation'] = 'Allocation' in row ? convertToBinary(row['Allocation']) : '';
-                outRow['is_spotlight'] = 'Spotlight' in row ? convertToBinary(row['Spotlight']) : '';
+                outRow['needs_manual_allocation'] = (mapping['needs_manual_allocation'] in row) ? convertToBinary(row[mapping['needs_manual_allocation']]) : '';
+                outRow['is_spotlight'] = (mapping['is_spotlight'] in row) ? convertToBinary(row[mapping['is_spotlight']]) : '';
                 
                 outRow['video'] = '';
-                outRow['attribute-type'] = row['Type'] || '';
-                outRow['attribute-year'] = row['Year'] || '';
-                outRow['attribute-serial_number'] = row['SerialNumber'] || '';
-                outRow['attribute-amount'] = row['Amount'] || '';
-                outRow['attribute-buy_amount'] = row['BuyAmount'] || '';
+                outRow['attribute-type'] = row[mapping['attribute-type']] || '';
+                outRow['attribute-year'] = row[mapping['attribute-year']] || '';
+                outRow['attribute-serial_number'] = row[mapping['attribute-serial_number']] || '';
+                outRow['attribute-amount'] = row[mapping['attribute-amount']] || '';
+                outRow['attribute-buy_amount'] = row[mapping['attribute-buy_amount']] || '';
 
                 return outRow;
             });

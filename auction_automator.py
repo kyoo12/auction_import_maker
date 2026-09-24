@@ -74,43 +74,6 @@ def process_auction_data(app_dir, asset_dir):
     except Exception as e:
         raise ValueError(f"ERROR reading the Excel file: {e}")
 
-    df_target = pd.DataFrame()
-    
-    def sanitize_text(val):
-        if pd.isna(val):
-            return ""
-        val_str = str(val)
-        return val_str.replace("_x000D_", "").replace("\xa0", " ").strip()
-
-    df_target[f'title_{TARGET_LANGUAGE}'] = df_dump['Title'].apply(sanitize_text) if 'Title' in df_dump.columns else ""
-    df_target[f'description_{TARGET_LANGUAGE}'] = df_dump['Description'].apply(sanitize_text) if 'Description' in df_dump.columns else ""
-    df_target['number'] = df_dump['Lotnumber']
-    df_target['starting_bid'] = df_dump['StartingBid']
-    df_target['estimated_price'] = df_dump['EstimatedPrice']
-    df_target['reserve_bid'] = df_dump['ReserveBid']
-    df_target['subcategory'] = df_dump['CategoryDomeId']
-    df_target['brand'] = df_dump['Brand']
-    df_target['attribute-type'] = df_dump['Type']
-    df_target['attribute-year'] = df_dump['Year']
-    df_target['attribute-serial_number'] = df_dump['SerialNumber']
-    df_target['attribute-amount'] = df_dump['Amount']
-    df_target['attribute-buy_amount'] = df_dump['BuyAmount']
-    df_target['seller'] = SELLER_NUM
-    df_target['location'] = LOCATION
-    df_target['vat_percentage'] = VAT_PERCENTAGE
-    df_target['fee_vat_percentage'] = FEE_VAT_PERCENTAGE
-    df_target['video'] = "" 
-
-    def convert_to_binary(val):
-        if val == True or str(val).strip().lower() == 'true':
-            return 1
-        return ""
-
-    if 'Allocation' in df_dump.columns:
-        df_target['needs_manual_allocation'] = df_dump['Allocation'].apply(convert_to_binary)
-    if 'Spotlight' in df_dump.columns:
-        df_target['is_spotlight'] = df_dump['Spotlight'].apply(convert_to_binary)
-
     template_cols = [
         'title_en', 'title_de', 'title_fr', 'title_nl', 'title_it', 'title_es', 'title_sv', 'title_pl', 
         'number', 'starting_bid', 'vat_percentage', 'fee_vat_percentage', 'description_en', 'description_de', 
@@ -119,6 +82,24 @@ def process_auction_data(app_dir, asset_dir):
         'needs_manual_allocation', 'is_spotlight', 'video', 'attribute-type', 'attribute-year', 
         'attribute-serial_number', 'attribute-amount', 'attribute-buy_amount'
     ]
+    
+    mapping = {
+        "title": "Title",
+        "description": "Description",
+        "number": "Lotnumber",
+        "starting_bid": "StartingBid",
+        "estimated_price": "EstimatedPrice",
+        "reserve_bid": "ReserveBid",
+        "subcategory": "CategoryDomeId",
+        "brand": "Brand",
+        "attribute-type": "Type",
+        "attribute-year": "Year",
+        "attribute-serial_number": "SerialNumber",
+        "attribute-amount": "Amount",
+        "attribute-buy_amount": "BuyAmount",
+        "needs_manual_allocation": "Allocation",
+        "is_spotlight": "Spotlight"
+    }
     
     # Prefer schema.json next to the executable, fallback to bundled one
     schema_path = os.path.join(app_dir, 'schema.json')
@@ -132,8 +113,53 @@ def process_auction_data(app_dir, asset_dir):
                 schema = json.load(f)
                 if 'template_cols' in schema:
                     template_cols = schema['template_cols']
+                if 'mapping' in schema:
+                    mapping = schema['mapping']
         except Exception:
             pass
+
+    df_target = pd.DataFrame()
+    
+    def sanitize_text(val):
+        if pd.isna(val):
+            return ""
+        val_str = str(val)
+        return val_str.replace("_x000D_", "").replace("\xa0", " ").strip()
+
+    def get_col(df, col_name, default=""):
+        return df[col_name] if col_name in df.columns else default
+
+    df_target[f'title_{TARGET_LANGUAGE}'] = get_col(df_dump, mapping['title']).apply(sanitize_text) if mapping['title'] in df_dump.columns else ""
+    df_target[f'description_{TARGET_LANGUAGE}'] = get_col(df_dump, mapping['description']).apply(sanitize_text) if mapping['description'] in df_dump.columns else ""
+    df_target['number'] = get_col(df_dump, mapping['number'])
+    df_target['starting_bid'] = get_col(df_dump, mapping['starting_bid'])
+    df_target['estimated_price'] = get_col(df_dump, mapping['estimated_price'])
+    df_target['reserve_bid'] = get_col(df_dump, mapping['reserve_bid'])
+    df_target['subcategory'] = get_col(df_dump, mapping['subcategory'])
+    df_target['brand'] = get_col(df_dump, mapping['brand'])
+    df_target['attribute-type'] = get_col(df_dump, mapping['attribute-type'])
+    df_target['attribute-year'] = get_col(df_dump, mapping['attribute-year'])
+    df_target['attribute-serial_number'] = get_col(df_dump, mapping['attribute-serial_number'])
+    df_target['attribute-amount'] = get_col(df_dump, mapping['attribute-amount'])
+    df_target['attribute-buy_amount'] = get_col(df_dump, mapping['attribute-buy_amount'])
+    df_target['seller'] = SELLER_NUM
+    df_target['location'] = LOCATION
+    df_target['vat_percentage'] = VAT_PERCENTAGE
+    df_target['fee_vat_percentage'] = FEE_VAT_PERCENTAGE
+    df_target['video'] = "" 
+
+    def convert_to_binary(val):
+        if val == True or str(val).strip().lower() == 'true':
+            return 1
+        return ""
+
+    alloc_col = mapping['needs_manual_allocation']
+    if alloc_col in df_dump.columns:
+        df_target['needs_manual_allocation'] = df_dump[alloc_col].apply(convert_to_binary)
+        
+    spot_col = mapping['is_spotlight']
+    if spot_col in df_dump.columns:
+        df_target['is_spotlight'] = df_dump[spot_col].apply(convert_to_binary)
 
     df_target = df_target.reindex(columns=template_cols)
     df_target.to_excel(OUTPUT_FILE, index=False)
