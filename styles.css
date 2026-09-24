@@ -60,7 +60,7 @@
             justify-content: flex-start;
             text-align: center;
             padding: 2rem 1.5rem;
-            max-width: 800px;
+            max-width: 650px;
             width: 100%;
             box-sizing: border-box;
         }
@@ -125,8 +125,8 @@
 
         .config-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr 1.5fr;
-            gap: 0.75rem;
+            grid-template-columns: 1fr 1fr 0.8fr 0.9fr 1.6fr;
+            gap: 0.5rem;
         }
 
         .input-group {
@@ -139,13 +139,14 @@
             font-size: 0.75rem;
             font-weight: bold;
             opacity: 0.7;
+            white-space: nowrap;
         }
 
         .input-group input, .input-group select {
             background: white;
             border: 1px solid rgba(41, 37, 36, 0.15);
-            border-radius: 8px;
-            padding: 0.5rem;
+            border-radius: 6px;
+            padding: 0.4rem 0.5rem;
             font-family: inherit;
             font-size: 0.85rem;
             color: var(--text-color);
