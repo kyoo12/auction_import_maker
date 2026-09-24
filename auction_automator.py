@@ -112,6 +112,17 @@ def process_auction_data(script_dir):
         'needs_manual_allocation', 'is_spotlight', 'video', 'attribute-type', 'attribute-year', 
         'attribute-serial_number', 'attribute-amount', 'attribute-buy_amount'
     ]
+    
+    schema_path = os.path.join(script_dir, 'schema.json')
+    if os.path.exists(schema_path):
+        try:
+            import json
+            with open(schema_path, 'r', encoding='utf-8') as f:
+                schema = json.load(f)
+                if 'template_cols' in schema:
+                    template_cols = schema['template_cols']
+        except Exception:
+            pass
 
     df_target = df_target.reindex(columns=template_cols)
     df_target.to_excel(OUTPUT_FILE, index=False)
@@ -145,10 +156,21 @@ class AutomatorApp(tk.Tk):
         self.label.pack()
 
         # Load Tom's head images (open and closed mouth)
-        script_dir = os.path.dirname(os.path.abspath(__file__))
+        import sys
+        if getattr(sys, 'frozen', False):
+            # Running as bundled executable
+            app_dir = os.path.dirname(sys.executable)
+            asset_dir = sys._MEIPASS
+        else:
+            # Running as standard script
+            app_dir = os.path.dirname(os.path.abspath(__file__))
+            asset_dir = app_dir
+            
+        self.app_dir = app_dir
+        self.asset_dir = asset_dir
         
         def load_img(filename):
-            path = os.path.join(script_dir, filename)
+            path = os.path.join(asset_dir, filename)
             if os.path.exists(path):
                 try:
                     img = Image.open(path)

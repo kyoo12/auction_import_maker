@@ -1,0 +1,11 @@
+{
+    "languages": ["en", "de", "fr", "nl", "it", "es", "sv", "pl"],
+    "template_cols": [
+        "title_en", "title_de", "title_fr", "title_nl", "title_it", "title_es", "title_sv", "title_pl",
+        "number", "starting_bid", "vat_percentage", "fee_vat_percentage", "description_en", "description_de",
+        "description_fr", "description_nl", "description_it", "description_es", "description_sv", "description_pl",
+        "estimated_price", "reserve_bid", "subcategory", "location", "seller", "brand",
+        "needs_manual_allocation", "is_spotlight", "video", "attribute-type", "attribute-year",
+        "attribute-serial_number", "attribute-amount", "attribute-buy_amount"
+    ]
+}
