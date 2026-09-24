@@ -11,8 +11,8 @@ from PIL import Image, ImageTk
 # ==========================================
 # 1. DATA PROCESSING LOGIC
 # ==========================================
-def process_auction_data(script_dir):
-    config_file = os.path.join(script_dir, 'config.txt')
+def process_auction_data(app_dir, asset_dir):
+    config_file = os.path.join(app_dir, 'config.txt')
 
     # Default Configuration
     config = {
@@ -46,7 +46,7 @@ def process_auction_data(script_dir):
     TARGET_LANGUAGE = config.get('TARGET_LANGUAGE', 'en')
 
     # Find all .xlsx files in the directory
-    all_xlsx = glob.glob(os.path.join(script_dir, '*.xlsx'))
+    all_xlsx = glob.glob(os.path.join(app_dir, '*.xlsx'))
 
     # Filter out the template and already generated files
     valid_dumps = [
@@ -57,7 +57,7 @@ def process_auction_data(script_dir):
     ]
 
     if len(valid_dumps) == 0:
-        raise ValueError(f"Could not find any raw auction excel dump.\nPlease place your Excel file in this folder: {script_dir}\nMake sure it is an .xlsx file and NOT named 'lot_import_...'")
+        raise ValueError(f"Could not find any raw auction excel dump.\nPlease place your Excel file in this folder: {app_dir}\nMake sure it is an .xlsx file and NOT named 'lot_import_...'")
     elif len(valid_dumps) > 1:
         files = "\n".join([f" - {os.path.basename(f)}" for f in valid_dumps])
         raise ValueError(f"Found multiple possible raw auction files:\n{files}\n\nPlease keep ONLY ONE raw auction file in the folder.")
@@ -66,7 +66,7 @@ def process_auction_data(script_dir):
     FILE_NAME = os.path.basename(SOURCE_FILE)
 
     base_name = os.path.splitext(FILE_NAME)[0].strip()
-    OUTPUT_FILE = os.path.join(script_dir, f'lot_import_{base_name}.xlsx')
+    OUTPUT_FILE = os.path.join(app_dir, f'lot_import_{base_name}.xlsx')
 
     try:
         # Load the source data
@@ -75,8 +75,15 @@ def process_auction_data(script_dir):
         raise ValueError(f"ERROR reading the Excel file: {e}")
 
     df_target = pd.DataFrame()
-    df_target[f'title_{TARGET_LANGUAGE}'] = df_dump['Title']
-    df_target[f'description_{TARGET_LANGUAGE}'] = df_dump['Description']
+    
+    def sanitize_text(val):
+        if pd.isna(val):
+            return ""
+        val_str = str(val)
+        return val_str.replace("_x000D_", "").replace("\xa0", " ").strip()
+
+    df_target[f'title_{TARGET_LANGUAGE}'] = df_dump['Title'].apply(sanitize_text) if 'Title' in df_dump.columns else ""
+    df_target[f'description_{TARGET_LANGUAGE}'] = df_dump['Description'].apply(sanitize_text) if 'Description' in df_dump.columns else ""
     df_target['number'] = df_dump['Lotnumber']
     df_target['starting_bid'] = df_dump['StartingBid']
     df_target['estimated_price'] = df_dump['EstimatedPrice']
@@ -113,7 +120,7 @@ def process_auction_data(script_dir):
         'attribute-serial_number', 'attribute-amount', 'attribute-buy_amount'
     ]
     
-    schema_path = os.path.join(script_dir, 'schema.json')
+    schema_path = os.path.join(asset_dir, 'schema.json')
     if os.path.exists(schema_path):
         try:
             import json
@@ -321,7 +328,7 @@ class AutomatorApp(tk.Tk):
             # Run data processing in background so GUI stays smooth
             def run_processing():
                 try:
-                    self.output_file = process_auction_data(self.script_dir)
+                    self.output_file = process_auction_data(self.app_dir, self.asset_dir)
                 except Exception as e:
                     self.error_msg = str(e)
                 finally:

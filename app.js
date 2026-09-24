@@ -229,6 +229,12 @@ const dropzone = document.getElementById('dropzone');
             const feeVatPercentage = document.getElementById('fee-vat-percent').value.trim() || '2';
             const targetLang = document.getElementById('target-lang').value;
 
+            // Helper to clean up special Excel characters like _x000D_ and non-breaking spaces
+            const sanitizeText = (text) => {
+                if (!text) return '';
+                return String(text).replace(/_x000D_/g, '').replace(/\u00A0/g, ' ').trim();
+            };
+
             // Map rows equivalent to Python logic
             const remappedRows = json.map(row => {
                 const outRow = {};
@@ -244,8 +250,8 @@ const dropzone = document.getElementById('dropzone');
                 });
 
                 // Populate selected language columns
-                outRow[`title_${targetLang}`] = row['Title'] || '';
-                outRow[`description_${targetLang}`] = row['Description'] || '';
+                outRow[`title_${targetLang}`] = sanitizeText(row['Title']);
+                outRow[`description_${targetLang}`] = sanitizeText(row['Description']);
 
                 outRow['number'] = row['Lotnumber'] || '';
                 outRow['starting_bid'] = row['StartingBid'] || '';
