@@ -1,0 +1,490 @@
+:root {
+            --bg-color: #FFF7ED; /* Warm cream */
+            --text-color: #292524; /* Dark stone */
+            --accent-color: #00BBA7; /* Teal accent */
+            --accent-hover: #00a391;
+            --gold-color: #F59E0B; /* Gold output */
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --grid-color: rgba(41, 37, 36, 0.04);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            
+            /* Plus grid texture */
+            background-image: 
+                radial-gradient(circle at center, var(--grid-color) 1px, transparent 1px),
+                linear-gradient(to right, transparent calc(50px - 1px), var(--grid-color) calc(50px - 1px), var(--grid-color) 50px, transparent 50px),
+                linear-gradient(to bottom, transparent calc(50px - 1px), var(--grid-color) calc(50px - 1px), var(--grid-color) 50px, transparent 50px);
+            background-size: 50px 50px;
+            background-position: center center;
+        }
+
+        /* Pill Navigation */
+        nav {
+            margin-top: 1.5rem;
+            background-color: rgba(41, 37, 36, 0.05);
+            backdrop-filter: blur(8px);
+            padding: 0.5rem 1.5rem;
+            border-radius: 9999px;
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.875rem;
+            z-index: 10;
+        }
+
+        nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        nav a:hover {
+            opacity: 1;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            text-align: center;
+            padding: 2rem 1.5rem;
+            max-width: 650px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .dome-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            border-radius: 50%;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border: 3px solid #fff;
+            background-color: #fff;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .dome-logo:hover {
+            transform: scale(1.12) rotate(4deg);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+        }
+
+        h1 {
+            font-size: 2.75rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.05em;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.7;
+            margin-bottom: 1.5rem;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+
+        /* Settings Card */
+        .config-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(41, 37, 36, 0.08);
+            border-radius: 16px;
+            padding: 1.25rem;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(41, 37, 36, 0.03);
+            text-align: left;
+        }
+
+        .config-card h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.8;
+            border-bottom: 1px dashed rgba(41, 37, 36, 0.1);
+            padding-bottom: 0.5rem;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .input-group label {
+            font-size: 0.75rem;
+            font-weight: bold;
+            opacity: 0.7;
+        }
+
+        .input-group input, .input-group select {
+            background: white;
+            border: 1px solid rgba(41, 37, 36, 0.15);
+            border-radius: 8px;
+            padding: 0.5rem;
+            font-family: inherit;
+            font-size: 0.85rem;
+            color: var(--text-color);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            border-color: var(--accent-color);
+        }
+
+        /* Drag & Drop Area / Dropzone */
+        .dropzone-container {
+            width: 100%;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .dropzone {
+            background: var(--card-bg);
+            border: 2px dashed rgba(41, 37, 36, 0.2);
+            border-radius: 16px;
+            padding: 3rem 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(41, 37, 36, 0.02);
+        }
+
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--accent-color);
+            background: rgba(0, 187, 167, 0.03);
+            box-shadow: 0 12px 40px rgba(0, 187, 167, 0.08);
+            transform: scale(1.01);
+        }
+
+        .dropzone-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .dropzone-text {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .dropzone-subtext {
+            font-size: 0.85rem;
+            opacity: 0.6;
+        }
+
+        /* Secret file input */
+        #file-input {
+            display: none;
+        }
+
+        /* ----------------------------------------------------
+           Animation Screen
+        ---------------------------------------------------- */
+        .animation-container {
+            display: none;
+            background: var(--card-bg);
+            border: 1px solid rgba(41, 37, 36, 0.08);
+            border-radius: 16px;
+            width: 100%;
+            height: 250px;
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 12px 40px rgba(41, 37, 36, 0.05);
+        }
+
+        .animation-track {
+            position: absolute;
+            bottom: 90px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            border-bottom: 2px dashed rgba(41, 37, 36, 0.2);
+        }
+
+        .anim-label {
+            position: absolute;
+            bottom: 25px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+
+        /* Prominent, readable, comic-style speech bubble */
+        .tom-speech-bubble {
+            position: absolute;
+            bottom: 158px; /* sit perfectly above Tom's 128px head */
+            left: -140px; /* starts off-screen with Tom */
+            background: #FBBF24; /* high-contrast bright warning yellow */
+            border: 3px solid #1C1917; /* strong, pixel-perfect dark border */
+            border-radius: 12px;
+            padding: 8px 16px;
+            font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+            font-weight: 900;
+            font-size: 1rem;
+            color: #1C1917;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 4px 4px 0px rgba(28, 25, 23, 0.2);
+            z-index: 10;
+            white-space: nowrap;
+            opacity: 0;
+            transform: scale(0) translateY(10px);
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.15s ease, background-color 0.2s ease;
+        }
+
+        /* Comic pointer tail */
+        .tom-speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -9px;
+            left: 24px;
+            border-width: 9px 9px 0;
+            border-style: solid;
+            border-color: #FBBF24 transparent;
+            display: block;
+            width: 0;
+            transition: border-color 0.2s ease;
+        }
+
+        .tom-speech-bubble::before {
+            content: '';
+            position: absolute;
+            bottom: -13px;
+            left: 22px;
+            border-width: 11px 11px 0;
+            border-style: solid;
+            border-color: #1C1917 transparent;
+            display: block;
+            width: 0;
+            z-index: -1;
+        }
+
+        /* Different states for the bubble! */
+        .tom-speech-bubble.num-num {
+            background: #FBBF24; /* Bright Yellow */
+        }
+        .tom-speech-bubble.num-num::after {
+            border-color: #FBBF24 transparent;
+        }
+
+        .tom-speech-bubble.yam {
+            background: #10B981; /* Mint/Emerald Green */
+            color: #FFFFFF;
+            border-color: #064E3B;
+            box-shadow: 4px 4px 0px rgba(6, 78, 59, 0.2);
+        }
+        .tom-speech-bubble.yam::after {
+            border-color: #10B981 transparent;
+        }
+        .tom-speech-bubble.yam::before {
+            border-color: #064E3B transparent;
+        }
+
+        /* Tom Pacman Head */
+        .tom-head {
+            position: absolute;
+            width: 128px;
+            height: 128px;
+            bottom: 26px;
+            left: -140px;
+            z-index: 5;
+            transition: transform 0.1s linear;
+        }
+
+        /* File document graphics */
+        .file-icon {
+            position: absolute;
+            width: 32px;
+            height: 40px;
+            bottom: 70px;
+            background: #fff;
+            border: 2px solid var(--text-color);
+            border-radius: 4px;
+            box-shadow: 3px 3px 0px rgba(41, 37, 36, 0.15);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        /* folded page corner effect */
+        .file-icon::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background: var(--bg-color);
+            border-left: 2px solid var(--text-color);
+            border-bottom: 2px solid var(--text-color);
+            border-top-right-radius: 4px;
+        }
+
+        .file-icon.template {
+            left: 250px;
+            background: #9ca3af; /* Gray file */
+        }
+
+        .file-icon.dump {
+            left: 380px;
+            background: var(--accent-color); /* Teal file */
+        }
+
+        .file-icon.output {
+            left: 450px;
+            background: var(--gold-color); /* Gold output */
+            opacity: 0;
+            transform: scale(0.5);
+            animation: poopFile 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes poopFile {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Instructions list */
+        .instructions {
+            text-align: left;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(41, 37, 36, 0.02);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .instructions h2 {
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.8;
+        }
+
+        .instructions ol {
+            padding-left: 1.25rem;
+            margin: 0;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .instructions li {
+            margin-bottom: 0.75rem;
+        }
+
+        .instructions li:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            background: #EF4444; /* Soft red */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(239, 68, 68, 0.3);
+            font-size: 0.85rem;
+            font-weight: bold;
+            z-index: 100;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+            max-width: 90%;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Success details/screen */
+        .success-box {
+            display: none;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(41, 37, 36, 0.08);
+            border-radius: 16px;
+            padding: 1.5rem;
+            width: 100%;
+            box-sizing: border-box;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 12px 40px rgba(41, 37, 36, 0.05);
+            text-align: center;
+        }
+
+        .success-box h2 {
+            color: var(--accent-color);
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .dl-button {
+            display: inline-block;
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            text-decoration: none;
+            padding: 0.75rem 2rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            outline: none;
+            transition: all 0.2s;
+            margin-top: 1rem;
+            font-family: inherit;
+        }
+
+        .dl-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(41, 37, 36, 0.15);
+        }
+
+        .reset-link {
+            display: block;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-color);
+            opacity: 0.6;
+            text-decoration: underline;
+            cursor: pointer;
+        }
