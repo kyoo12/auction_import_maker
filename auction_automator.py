@@ -120,7 +120,11 @@ def process_auction_data(app_dir, asset_dir):
         'attribute-serial_number', 'attribute-amount', 'attribute-buy_amount'
     ]
     
-    schema_path = os.path.join(asset_dir, 'schema.json')
+    # Prefer schema.json next to the executable, fallback to bundled one
+    schema_path = os.path.join(app_dir, 'schema.json')
+    if not os.path.exists(schema_path):
+        schema_path = os.path.join(asset_dir, 'schema.json')
+        
     if os.path.exists(schema_path):
         try:
             import json
