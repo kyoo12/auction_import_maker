@@ -9,6 +9,133 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 
+NUMERIC_COLS = {
+    'starting_bid', 'estimated_price', 'reserve_bid',
+    'vat_percentage', 'fee_vat_percentage',
+    'attribute-amount', 'attribute-buy_amount'
+}
+
+BINARY_COLS = {
+    'needs_manual_allocation', 'is_spotlight'
+}
+
+def sanitize_multi_line(val):
+    if pd.isna(val) or val is None or val == "":
+        return ""
+    if isinstance(val, (int, float, np.number)):
+        if np.isnan(val):
+            return ""
+        val = str(val)
+    s = str(val)
+
+    # 1. Decode OpenXML hex entities (handling double-escaped _x005F_ first)
+    while re.search(r'_x005[fF]_x([0-9a-fA-F]{4})_', s):
+        s = re.sub(r'_x005[fF]_x([0-9a-fA-F]{4})_', r'_x\1_', s)
+    s = re.sub(r'_x005[fF]_', '_', s, flags=re.IGNORECASE)
+    def _decode_hex(m):
+        try:
+            return chr(int(m.group(1), 16))
+        except Exception:
+            return m.group(0)
+    s = re.sub(r'_x([0-9a-fA-F]{4})_', _decode_hex, s, flags=re.IGNORECASE)
+    s = re.sub(r'_x000[dD]_?', '\r', s, flags=re.IGNORECASE)
+
+    # 2. Eliminate \r, \r\n, \u2028, \u2029 -> normalize to clean \n
+    s = s.replace('\r\n', '\n')
+    s = re.sub(r'[\r\u2028\u2029]', '\n', s)
+
+    # 3. Clean non-breaking and Unicode spaces
+    s = re.sub(r'[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]', ' ', s)
+
+    # 4. Strip zero-width and invisible control characters (preserve \n)
+    s = re.sub(r'[\u200B-\u200D\uFEFF\u2060\u180E]', '', s)
+    s = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]', '', s)
+
+    # 5. Trim
+    s = s.strip()
+
+    # 6. Cap at Excel's 32,767 limit
+    return s[:32767]
+
+def sanitize_single_line(val):
+    if pd.isna(val) or val is None or val == "":
+        return ""
+    # Preserve numeric types directly
+    if isinstance(val, (int, float, np.number)):
+        if np.isnan(val):
+            return ""
+        if isinstance(val, float) and val.is_integer():
+            return int(val)
+        return val
+    s = str(val)
+
+    # 1. Decode OpenXML hex entities
+    while re.search(r'_x005[fF]_x([0-9a-fA-F]{4})_', s):
+        s = re.sub(r'_x005[fF]_x([0-9a-fA-F]{4})_', r'_x\1_', s)
+    s = re.sub(r'_x005[fF]_', '_', s, flags=re.IGNORECASE)
+    def _decode_hex(m):
+        try:
+            return chr(int(m.group(1), 16))
+        except Exception:
+            return m.group(0)
+    s = re.sub(r'_x([0-9a-fA-F]{4})_', _decode_hex, s, flags=re.IGNORECASE)
+    s = re.sub(r'_x000[dD]_?', ' ', s, flags=re.IGNORECASE)
+
+    # 2. Collapse internal newlines and line breaks to spaces
+    s = re.sub(r'[\r\n\u2028\u2029\t]+', ' ', s)
+
+    # 3. Clean non-breaking and Unicode spaces
+    s = re.sub(r'[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]', ' ', s)
+
+    # 4. Strip zero-width and invisible control characters
+    s = re.sub(r'[\u200B-\u200D\uFEFF\u2060\u180E]', '', s)
+    s = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', s)
+
+    # 5. Collapse multiple spaces and trim
+    s = re.sub(r' +', ' ', s).strip()
+
+    # 6. Cap at Excel's 32,767 limit
+    return s[:32767]
+
+def sanitize_numeric(val):
+    if pd.isna(val) or val is None or val == "":
+        return ""
+    if isinstance(val, (int, float, np.number)):
+        if np.isnan(val):
+            return ""
+        if isinstance(val, float) and val.is_integer():
+            return int(val)
+        return val
+    clean = sanitize_single_line(val)
+    if clean == "":
+        return ""
+    try:
+        if '.' in str(clean):
+            f = float(clean)
+            return int(f) if f.is_integer() else f
+        return int(clean)
+    except ValueError:
+        return clean
+
+def convert_to_binary(val):
+    if pd.isna(val) or val is None or val == "":
+        return ""
+    if val is True or val == 1:
+        return 1
+    val_str = str(val).strip().lower()
+    if val_str in ('true', '1', '1.0', 'yes', 'y'):
+        return 1
+    return ""
+
+def sanitize_column_value(col_name, val):
+    if col_name in BINARY_COLS:
+        return convert_to_binary(val)
+    if col_name.startswith('description'):
+        return sanitize_multi_line(val)
+    if col_name in NUMERIC_COLS:
+        return sanitize_numeric(val)
+    return sanitize_single_line(val)
+
 # ==========================================
 # 1. DATA PROCESSING LOGIC
 # ==========================================
@@ -75,6 +202,12 @@ def process_auction_data(app_dir, asset_dir):
     except Exception as e:
         raise ValueError(f"ERROR reading the Excel file: {e}")
 
+    if df_dump.empty:
+        raise ValueError("No data found in 'Lots' sheet.")
+
+    # Clean column headers: strip whitespace and UTF-8 BOM
+    df_dump.columns = [str(col).strip().lstrip('\ufeff') for col in df_dump.columns]
+
     template_cols = [
         'title_en', 'title_de', 'title_fr', 'title_nl', 'title_it', 'title_es', 'title_sv', 'title_pl', 
         'number', 'starting_bid', 'vat_percentage', 'fee_vat_percentage', 'description_en', 'description_de', 
@@ -102,6 +235,8 @@ def process_auction_data(app_dir, asset_dir):
         "is_spotlight": "Spotlight"
     }
     
+    langs = ['en', 'de', 'fr', 'nl', 'it', 'es', 'sv', 'pl']
+
     # Prefer schema.json next to the executable, fallback to bundled one
     schema_path = os.path.join(app_dir, 'schema.json')
     if not os.path.exists(schema_path):
@@ -116,61 +251,74 @@ def process_auction_data(app_dir, asset_dir):
                     template_cols = schema['template_cols']
                 if 'mapping' in schema:
                     mapping = schema['mapping']
+                if 'languages' in schema:
+                    langs = schema['languages']
         except Exception:
             pass
 
-    df_target = pd.DataFrame()
-    
-    def sanitize_text(val):
-        if pd.isna(val):
-            return ""
-        val_str = str(val)
-        # Strip literal _x000D_ or _x000d_
-        val_str = re.sub(r'_x000[dD]_', '', val_str)
-        # Normalize Windows CRLF and isolated CR to standard Excel line feeds (\n)
-        val_str = val_str.replace('\r\n', '\n').replace('\r', '\n')
-        # Replace non-breaking spaces with normal spaces
-        val_str = val_str.replace('\xa0', ' ')
-        # Strip unprintable control characters
-        val_str = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F]', '', val_str)
-        return val_str.strip()
+    df_target = pd.DataFrame(index=df_dump.index)
 
-    def get_col(df, col_name, default=""):
-        return df[col_name] if col_name in df.columns else default
+    # Preset language titles/desc to blanks
+    for l in langs:
+        df_target[f'title_{l}'] = ""
+        df_target[f'description_{l}'] = ""
 
-    df_target[f'title_{TARGET_LANGUAGE}'] = get_col(df_dump, mapping['title']).apply(sanitize_text) if mapping['title'] in df_dump.columns else ""
-    df_target[f'description_{TARGET_LANGUAGE}'] = get_col(df_dump, mapping['description']).apply(sanitize_text) if mapping['description'] in df_dump.columns else ""
-    df_target['number'] = get_col(df_dump, mapping['number'])
-    df_target['starting_bid'] = get_col(df_dump, mapping['starting_bid'])
-    df_target['estimated_price'] = get_col(df_dump, mapping['estimated_price'])
-    df_target['reserve_bid'] = get_col(df_dump, mapping['reserve_bid'])
-    df_target['subcategory'] = get_col(df_dump, mapping['subcategory'])
-    df_target['brand'] = get_col(df_dump, mapping['brand'])
-    df_target['attribute-type'] = get_col(df_dump, mapping['attribute-type'])
-    df_target['attribute-year'] = get_col(df_dump, mapping['attribute-year'])
-    df_target['attribute-serial_number'] = get_col(df_dump, mapping['attribute-serial_number'])
-    df_target['attribute-amount'] = get_col(df_dump, mapping['attribute-amount'])
-    df_target['attribute-buy_amount'] = get_col(df_dump, mapping['attribute-buy_amount'])
-    df_target['seller'] = SELLER_NUM
-    df_target['location'] = LOCATION
-    df_target['vat_percentage'] = VAT_PERCENTAGE
-    df_target['fee_vat_percentage'] = FEE_VAT_PERCENTAGE
-    df_target['video'] = "" 
+    # Populate selected language columns
+    title_src = mapping.get('title', 'Title')
+    if title_src in df_dump.columns:
+        df_target[f'title_{TARGET_LANGUAGE}'] = df_dump[title_src].apply(lambda v: sanitize_column_value(f'title_{TARGET_LANGUAGE}', v))
+    else:
+        df_target[f'title_{TARGET_LANGUAGE}'] = ""
 
-    def convert_to_binary(val):
-        if val == True or str(val).strip().lower() == 'true':
-            return 1
-        return ""
+    desc_src = mapping.get('description', 'Description')
+    if desc_src in df_dump.columns:
+        df_target[f'description_{TARGET_LANGUAGE}'] = df_dump[desc_src].apply(lambda v: sanitize_column_value(f'description_{TARGET_LANGUAGE}', v))
+    else:
+        df_target[f'description_{TARGET_LANGUAGE}'] = ""
 
-    alloc_col = mapping['needs_manual_allocation']
+    # Populate standard fields with universal sanitization and preserved types
+    standard_fields = [
+        'number', 'starting_bid', 'estimated_price', 'reserve_bid', 'subcategory', 'brand',
+        'attribute-type', 'attribute-year', 'attribute-serial_number', 'attribute-amount', 'attribute-buy_amount'
+    ]
+    for field in standard_fields:
+        src_col = mapping.get(field)
+        if src_col and src_col in df_dump.columns:
+            df_target[field] = df_dump[src_col].apply(lambda v, f=field: sanitize_column_value(f, v))
+        else:
+            df_target[field] = ""
+
+    alloc_col = mapping.get('needs_manual_allocation', 'Allocation')
     if alloc_col in df_dump.columns:
         df_target['needs_manual_allocation'] = df_dump[alloc_col].apply(convert_to_binary)
-        
-    spot_col = mapping['is_spotlight']
+    else:
+        df_target['needs_manual_allocation'] = ""
+
+    spot_col = mapping.get('is_spotlight', 'Spotlight')
     if spot_col in df_dump.columns:
         df_target['is_spotlight'] = df_dump[spot_col].apply(convert_to_binary)
+    else:
+        df_target['is_spotlight'] = ""
 
-    df_target = df_target.reindex(columns=template_cols)
+    # Config columns
+    df_target['seller'] = sanitize_column_value('seller', SELLER_NUM)
+    df_target['location'] = sanitize_column_value('location', LOCATION)
+    df_target['vat_percentage'] = sanitize_column_value('vat_percentage', VAT_PERCENTAGE)
+    df_target['fee_vat_percentage'] = sanitize_column_value('fee_vat_percentage', FEE_VAT_PERCENTAGE)
+    df_target['video'] = ""
+
+    # Map any additional keys from mapping not yet in df_target
+    for out_key, src_key in mapping.items():
+        if out_key in ('title', 'description'):
+            continue
+        if out_key not in df_target.columns:
+            if src_key in df_dump.columns:
+                df_target[out_key] = df_dump[src_key].apply(lambda v, k=out_key: sanitize_column_value(k, v))
+            else:
+                df_target[out_key] = ""
+
+    # Reindex columns to match template, filling any inactive language or missing cols with empty strings
+    df_target = df_target.reindex(columns=template_cols).fillna('')
     df_target.to_excel(OUTPUT_FILE, index=False)
     return OUTPUT_FILE
 
@@ -265,7 +413,7 @@ class AutomatorApp(tk.Tk):
         self.bubble_rect = self.canvas.create_polygon([0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0], fill="#FEF08A", outline="#1C1917", width=2, state=tk.HIDDEN)
         self.bubble_text = self.canvas.create_text(0, 0, text="NUM NUM!", font=("Arial", 11, "bold"), fill="#1C1917", state=tk.HIDDEN)
         
-        self.script_dir = script_dir
+        self.script_dir = app_dir
         self.processing_done = False
         self.output_file = None
         self.error_msg = None

@@ -213,14 +213,143 @@ const dropzone = document.getElementById('dropzone');
 
         resetLink.addEventListener('click', resetToDropzone);
 
+        // Universal Sanitization Helpers
+        // Multi-line sanitization (for description_* fields)
+        function sanitizeMultiLine(val) {
+            if (val === null || val === undefined) return '';
+            if (typeof val === 'number') {
+                if (isNaN(val)) return '';
+                val = String(val);
+            }
+            let s = String(val);
+            
+            // 1. Decode OpenXML hex entities (handling double-escaped _x005F_ first)
+            while (/_x005[fF]_x([0-9a-fA-F]{4})_/i.test(s)) {
+                s = s.replace(/_x005[fF]_x([0-9a-fA-F]{4})_/gi, (_, hex) => '_x' + hex + '_');
+            }
+            s = s.replace(/_x005[fF]_/gi, '_');
+            s = s.replace(/_x([0-9a-fA-F]{4})_/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+            s = s.replace(/_x000[dD]_?/gi, '\r');
+            
+            // 2. Eliminate \r, \r\n, \u2028, \u2029 -> normalize to clean \n
+            s = s.replace(/\r\n/g, '\n').replace(/[\r\u2028\u2029]/g, '\n');
+            
+            // 3. Clean non-breaking and Unicode spaces
+            s = s.replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ');
+            
+            // 4. Strip zero-width and invisible control characters (preserve \n)
+            s = s.replace(/[\u200B-\u200D\uFEFF\u2060\u180E]/g, '');
+            s = s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '');
+            
+            // 5. Trim
+            s = s.trim();
+            
+            // 6. Cap at Excel's 32,767 limit
+            if (s.length > 32767) {
+                s = s.slice(0, 32767);
+            }
+            return s;
+        }
+
+        // Single-line sanitization (for title_*, brand, attribute-*, number, subcategory, seller, location, etc.)
+        function sanitizeSingleLine(val) {
+            if (val === null || val === undefined) return '';
+            // Preserve numeric types directly
+            if (typeof val === 'number') {
+                return isNaN(val) ? '' : val;
+            }
+            let s = String(val);
+            
+            // 1. Decode OpenXML hex entities
+            while (/_x005[fF]_x([0-9a-fA-F]{4})_/i.test(s)) {
+                s = s.replace(/_x005[fF]_x([0-9a-fA-F]{4})_/gi, (_, hex) => '_x' + hex + '_');
+            }
+            s = s.replace(/_x005[fF]_/gi, '_');
+            s = s.replace(/_x([0-9a-fA-F]{4})_/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+            s = s.replace(/_x000[dD]_?/gi, ' ');
+            
+            // 2. Collapse internal newlines and line breaks to spaces
+            s = s.replace(/[\r\n\u2028\u2029\t]+/g, ' ');
+            
+            // 3. Clean non-breaking and Unicode spaces
+            s = s.replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ');
+            
+            // 4. Strip zero-width and invisible control characters
+            s = s.replace(/[\u200B-\u200D\uFEFF\u2060\u180E]/g, '');
+            s = s.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+            
+            // 5. Collapse multiple spaces and trim
+            s = s.replace(/ +/g, ' ').trim();
+            
+            // 6. Cap at Excel's 32,767 limit
+            if (s.length > 32767) {
+                s = s.slice(0, 32767);
+            }
+            return s;
+        }
+
+        // Sanitizes numeric values (starting_bid, estimated_price, reserve_bid, vat_percentage, fee_vat_percentage, attribute-amount, attribute-buy_amount)
+        function sanitizeNumeric(val) {
+            if (val === null || val === undefined || val === '') return '';
+            if (typeof val === 'number') {
+                return isNaN(val) ? '' : val;
+            }
+            const clean = sanitizeSingleLine(val);
+            if (clean === '') return '';
+            const num = Number(clean);
+            return isNaN(num) ? clean : num;
+        }
+
+        // Binary flag conversion
+        function convertToBinary(val) {
+            if (val === null || val === undefined || val === '') return '';
+            if (val === true || val === 1 || val === '1') return 1;
+            const s = String(val).trim().toLowerCase();
+            if (s === 'true' || s === '1' || s === 'yes' || s === 'y') return 1;
+            return '';
+        }
+
+        const NUMERIC_COLS = new Set([
+            'starting_bid', 'estimated_price', 'reserve_bid',
+            'vat_percentage', 'fee_vat_percentage',
+            'attribute-amount', 'attribute-buy_amount'
+        ]);
+
+        const BINARY_COLS = new Set([
+            'needs_manual_allocation', 'is_spotlight'
+        ]);
+
+        function sanitizeColumnValue(colName, val) {
+            if (BINARY_COLS.has(colName)) {
+                return convertToBinary(val);
+            }
+            if (colName.startsWith('description')) {
+                return sanitizeMultiLine(val);
+            }
+            if (NUMERIC_COLS.has(colName)) {
+                return sanitizeNumeric(val);
+            }
+            return sanitizeSingleLine(val);
+        }
+
         // Core conversion logic matching Python pandas script
         function performExcelRemap() {
             const sheet = rawExcelData.Sheets['Lots'];
-            const json = XLSX.utils.sheet_to_json(sheet);
+            const rawJson = XLSX.utils.sheet_to_json(sheet);
 
-            if (json.length === 0) {
+            if (rawJson.length === 0) {
                 throw new Error("No data found in 'Lots' sheet.");
             }
+
+            // Clean up column headers in rawJson: strip leading/trailing whitespace and UTF-8 BOM (\uFEFF)
+            const json = rawJson.map(row => {
+                const cleanRow = {};
+                for (const [key, value] of Object.entries(row)) {
+                    const cleanKey = String(key).trim().replace(/^\uFEFF/, '');
+                    cleanRow[cleanKey] = value;
+                }
+                return cleanRow;
+            });
 
             // Get configuration values from UI inputs
             const sellerNum = document.getElementById('seller-num').value.trim() || '159';
@@ -228,18 +357,6 @@ const dropzone = document.getElementById('dropzone');
             const vatPercentage = document.getElementById('vat-percent').value.trim() || '20';
             const feeVatPercentage = document.getElementById('fee-vat-percent').value.trim() || '2';
             const targetLang = document.getElementById('target-lang').value;
-
-            // Helper to clean up special Excel characters like _x000d_, carriage returns, and non-breaking spaces
-            const sanitizeText = (text) => {
-                if (text === null || text === undefined) return '';
-                return String(text)
-                    .replace(/_x000[dD]_/gi, '') // Strip literal _x000D_ or _x000d_
-                    .replace(/\r\n/g, '\n')     // Convert Windows CRLF to standard Excel line feed (\n)
-                    .replace(/\r/g, '\n')       // Convert isolated CR to standard line feed (prevents SheetJS from emitting _x000d_)
-                    .replace(/\u00A0/g, ' ')    // Replace non-breaking spaces with normal spaces
-                    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '') // Strip unprintable ASCII control chars
-                    .trim();
-            };
 
             // Map rows equivalent to Python logic
             const remappedRows = json.map(row => {
@@ -274,38 +391,43 @@ const dropzone = document.getElementById('dropzone');
                     "is_spotlight": "Spotlight"
                 };
 
-                // Populate selected language columns
-                outRow[`title_${targetLang}`] = sanitizeText(row[mapping['title']]);
-                outRow[`description_${targetLang}`] = sanitizeText(row[mapping['description']]);
-
-                outRow['number'] = row[mapping['number']] || '';
-                outRow['starting_bid'] = row[mapping['starting_bid']] || '';
-                outRow['vat_percentage'] = vatPercentage;
-                outRow['fee_vat_percentage'] = feeVatPercentage;
-                outRow['estimated_price'] = row[mapping['estimated_price']] || '';
-                outRow['reserve_bid'] = row[mapping['reserve_bid']] || '';
-                outRow['subcategory'] = row[mapping['subcategory']] || '';
-                outRow['location'] = location;
-                outRow['seller'] = sellerNum;
-                outRow['brand'] = row[mapping['brand']] || '';
-                
-                // Allocation / Spotlight conversions
-                const convertToBinary = (val) => {
-                    if (val === true || String(val).trim().toLowerCase() === 'true' || val === 1 || val === '1') {
-                        return 1;
-                    }
-                    return '';
+                // Helper to get raw cell value safely without wiping 0 via falsy check
+                const getVal = (field) => {
+                    const srcKey = mapping[field];
+                    return (srcKey && srcKey in row) ? row[srcKey] : undefined;
                 };
 
-                outRow['needs_manual_allocation'] = (mapping['needs_manual_allocation'] in row) ? convertToBinary(row[mapping['needs_manual_allocation']]) : '';
-                outRow['is_spotlight'] = (mapping['is_spotlight'] in row) ? convertToBinary(row[mapping['is_spotlight']]) : '';
-                
-                outRow['video'] = '';
-                outRow['attribute-type'] = row[mapping['attribute-type']] || '';
-                outRow['attribute-year'] = row[mapping['attribute-year']] || '';
-                outRow['attribute-serial_number'] = row[mapping['attribute-serial_number']] || '';
-                outRow['attribute-amount'] = row[mapping['attribute-amount']] || '';
-                outRow['attribute-buy_amount'] = row[mapping['attribute-buy_amount']] || '';
+                // Populate active language columns
+                outRow[`title_${targetLang}`] = sanitizeColumnValue(`title_${targetLang}`, getVal('title'));
+                outRow[`description_${targetLang}`] = sanitizeColumnValue(`description_${targetLang}`, getVal('description'));
+
+                // Populate all standard fields with universal sanitization and preserved types
+                outRow['number'] = sanitizeColumnValue('number', getVal('number'));
+                outRow['starting_bid'] = sanitizeColumnValue('starting_bid', getVal('starting_bid'));
+                outRow['vat_percentage'] = sanitizeColumnValue('vat_percentage', vatPercentage);
+                outRow['fee_vat_percentage'] = sanitizeColumnValue('fee_vat_percentage', feeVatPercentage);
+                outRow['estimated_price'] = sanitizeColumnValue('estimated_price', getVal('estimated_price'));
+                outRow['reserve_bid'] = sanitizeColumnValue('reserve_bid', getVal('reserve_bid'));
+                outRow['subcategory'] = sanitizeColumnValue('subcategory', getVal('subcategory'));
+                outRow['location'] = sanitizeColumnValue('location', location);
+                outRow['seller'] = sanitizeColumnValue('seller', sellerNum);
+                outRow['brand'] = sanitizeColumnValue('brand', getVal('brand'));
+                outRow['needs_manual_allocation'] = sanitizeColumnValue('needs_manual_allocation', getVal('needs_manual_allocation'));
+                outRow['is_spotlight'] = sanitizeColumnValue('is_spotlight', getVal('is_spotlight'));
+                outRow['video'] = sanitizeColumnValue('video', getVal('video') !== undefined ? getVal('video') : '');
+                outRow['attribute-type'] = sanitizeColumnValue('attribute-type', getVal('attribute-type'));
+                outRow['attribute-year'] = sanitizeColumnValue('attribute-year', getVal('attribute-year'));
+                outRow['attribute-serial_number'] = sanitizeColumnValue('attribute-serial_number', getVal('attribute-serial_number'));
+                outRow['attribute-amount'] = sanitizeColumnValue('attribute-amount', getVal('attribute-amount'));
+                outRow['attribute-buy_amount'] = sanitizeColumnValue('attribute-buy_amount', getVal('attribute-buy_amount'));
+
+                // Handle any extra mapped keys from schema.json
+                for (const [outKey, srcKey] of Object.entries(mapping)) {
+                    if (outKey === 'title' || outKey === 'description') continue;
+                    if (!(outKey in outRow)) {
+                        outRow[outKey] = sanitizeColumnValue(outKey, (srcKey in row) ? row[srcKey] : undefined);
+                    }
+                }
 
                 return outRow;
             });
@@ -324,6 +446,15 @@ const dropzone = document.getElementById('dropzone');
                     'attribute-serial_number', 'attribute-amount', 'attribute-buy_amount'
                 ];
             }
+
+            // Ensure all template columns exist in every row
+            remappedRows.forEach(row => {
+                templateCols.forEach(col => {
+                    if (!(col in row)) {
+                        row[col] = '';
+                    }
+                });
+            });
 
             const newSheet = XLSX.utils.json_to_sheet(remappedRows, {header: templateCols});
             const newWorkbook = XLSX.utils.book_new();
