@@ -2,6 +2,7 @@ import os
 import glob
 import threading
 import time
+import re
 import pandas as pd
 import numpy as np
 import tkinter as tk
@@ -124,7 +125,15 @@ def process_auction_data(app_dir, asset_dir):
         if pd.isna(val):
             return ""
         val_str = str(val)
-        return val_str.replace("_x000D_", "").replace("\xa0", " ").strip()
+        # Strip literal _x000D_ or _x000d_
+        val_str = re.sub(r'_x000[dD]_', '', val_str)
+        # Normalize Windows CRLF and isolated CR to standard Excel line feeds (\n)
+        val_str = val_str.replace('\r\n', '\n').replace('\r', '\n')
+        # Replace non-breaking spaces with normal spaces
+        val_str = val_str.replace('\xa0', ' ')
+        # Strip unprintable control characters
+        val_str = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F]', '', val_str)
+        return val_str.strip()
 
     def get_col(df, col_name, default=""):
         return df[col_name] if col_name in df.columns else default

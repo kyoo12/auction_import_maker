@@ -229,10 +229,16 @@ const dropzone = document.getElementById('dropzone');
             const feeVatPercentage = document.getElementById('fee-vat-percent').value.trim() || '2';
             const targetLang = document.getElementById('target-lang').value;
 
-            // Helper to clean up special Excel characters like _x000D_ and non-breaking spaces
+            // Helper to clean up special Excel characters like _x000d_, carriage returns, and non-breaking spaces
             const sanitizeText = (text) => {
-                if (!text) return '';
-                return String(text).replace(/_x000D_/g, '').replace(/\u00A0/g, ' ').trim();
+                if (text === null || text === undefined) return '';
+                return String(text)
+                    .replace(/_x000[dD]_/gi, '') // Strip literal _x000D_ or _x000d_
+                    .replace(/\r\n/g, '\n')     // Convert Windows CRLF to standard Excel line feed (\n)
+                    .replace(/\r/g, '\n')       // Convert isolated CR to standard line feed (prevents SheetJS from emitting _x000d_)
+                    .replace(/\u00A0/g, ' ')    // Replace non-breaking spaces with normal spaces
+                    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '') // Strip unprintable ASCII control chars
+                    .trim();
             };
 
             // Map rows equivalent to Python logic
