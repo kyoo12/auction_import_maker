@@ -22,44 +22,51 @@ BINARY_COLS = {
 def sanitize_multi_line(val):
     if pd.isna(val) or val is None or val == "":
         return ""
-    if isinstance(val, (int, float, np.number)):
+    if isinstance(val, bool):
+        val = str(val)
+    elif isinstance(val, (int, float, np.number)):
         if np.isnan(val):
             return ""
         val = str(val)
     s = str(val)
 
-    # 1. Decode OpenXML hex entities (handling double-escaped _x005F_ first)
-    while re.search(r'_x005[fF]_x([0-9a-fA-F]{4})_', s):
-        s = re.sub(r'_x005[fF]_x([0-9a-fA-F]{4})_', r'_x\1_', s)
+    # 1. Unwrap double-escaped OpenXML control hex entities (e.g. _x005F_x000D_ -> _x000D_)
+    while re.search(r'_x005[fF]_x(000[dDaA9]|00[01][0-9a-fA-F]|005[fF])_', s):
+        s = re.sub(r'_x005[fF]_x(000[dDaA9]|00[01][0-9a-fA-F]|005[fF])_', r'_x\1_', s)
     s = re.sub(r'_x005[fF]_', '_', s, flags=re.IGNORECASE)
-    def _decode_hex(m):
-        try:
-            return chr(int(m.group(1), 16))
-        except Exception:
-            return m.group(0)
-    s = re.sub(r'_x([0-9a-fA-F]{4})_', _decode_hex, s, flags=re.IGNORECASE)
-    s = re.sub(r'_x000[dD]_?', '\r', s, flags=re.IGNORECASE)
 
-    # 2. Eliminate \r, \r\n, \u2028, \u2029 -> normalize to clean \n
-    s = s.replace('\r\n', '\n')
-    s = re.sub(r'[\r\u2028\u2029]', '\n', s)
+    # 2. Decode OpenXML control entities:
+    # LF entity -> \n
+    s = re.sub(r'_x000[aA]_', '\n', s, flags=re.IGNORECASE)
+    # CR entity -> \r
+    s = re.sub(r'_x000[dD]_', '\r', s, flags=re.IGNORECASE)
+    # Strip other invalid XML control entities (0000-001F except 0009 tab)
+    s = re.sub(r'_x00(?:0[0-8b-ce-f]|1[0-9a-f])_', '', s, flags=re.IGNORECASE)
 
-    # 3. Clean non-breaking and Unicode spaces
+    # 3. Normalize all line endings:
+    # Convert Unicode line/paragraph separators to \n
+    s = re.sub(r'[\u2028\u2029]', '\n', s)
+    # Normalize combinations of \r and \n (\r\n -> \n, \r\r\n -> \n, isolated \r -> \n)
+    s = re.sub(r'\r+\n?', '\n', s)
+
+    # 4. Clean non-breaking and Unicode spaces
     s = re.sub(r'[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]', ' ', s)
 
-    # 4. Strip zero-width and invisible control characters (preserve \n)
+    # 5. Strip zero-width and invisible control characters (preserve \n and \t)
     s = re.sub(r'[\u200B-\u200D\uFEFF\u2060\u180E]', '', s)
     s = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]', '', s)
 
-    # 5. Trim
+    # 6. Trim leading/trailing whitespace
     s = s.strip()
 
-    # 6. Cap at Excel's 32,767 limit
+    # 7. Cap at Excel's 32,767 limit
     return s[:32767]
 
 def sanitize_single_line(val):
     if pd.isna(val) or val is None or val == "":
         return ""
+    if isinstance(val, bool):
+        return str(val)
     # Preserve numeric types directly
     if isinstance(val, (int, float, np.number)):
         if np.isnan(val):
@@ -69,36 +76,35 @@ def sanitize_single_line(val):
         return val
     s = str(val)
 
-    # 1. Decode OpenXML hex entities
-    while re.search(r'_x005[fF]_x([0-9a-fA-F]{4})_', s):
-        s = re.sub(r'_x005[fF]_x([0-9a-fA-F]{4})_', r'_x\1_', s)
+    # 1. Unwrap double-escaped OpenXML control hex entities
+    while re.search(r'_x005[fF]_x(000[dDaA9]|00[01][0-9a-fA-F]|005[fF])_', s):
+        s = re.sub(r'_x005[fF]_x(000[dDaA9]|00[01][0-9a-fA-F]|005[fF])_', r'_x\1_', s)
     s = re.sub(r'_x005[fF]_', '_', s, flags=re.IGNORECASE)
-    def _decode_hex(m):
-        try:
-            return chr(int(m.group(1), 16))
-        except Exception:
-            return m.group(0)
-    s = re.sub(r'_x([0-9a-fA-F]{4})_', _decode_hex, s, flags=re.IGNORECASE)
-    s = re.sub(r'_x000[dD]_?', ' ', s, flags=re.IGNORECASE)
 
-    # 2. Collapse internal newlines and line breaks to spaces
+    # 2. Control entities -> spaces (for CR/LF/Tab) or stripped
+    s = re.sub(r'_x000[dDaA9]_', ' ', s, flags=re.IGNORECASE)
+    s = re.sub(r'_x00(?:0[0-8b-ce-f]|1[0-9a-f])_', '', s, flags=re.IGNORECASE)
+
+    # 3. Collapse internal newlines and line breaks to spaces
     s = re.sub(r'[\r\n\u2028\u2029\t]+', ' ', s)
 
-    # 3. Clean non-breaking and Unicode spaces
+    # 4. Clean non-breaking and Unicode spaces
     s = re.sub(r'[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]', ' ', s)
 
-    # 4. Strip zero-width and invisible control characters
+    # 5. Strip zero-width and invisible control characters
     s = re.sub(r'[\u200B-\u200D\uFEFF\u2060\u180E]', '', s)
     s = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', s)
 
-    # 5. Collapse multiple spaces and trim
+    # 6. Collapse multiple spaces and trim
     s = re.sub(r' +', ' ', s).strip()
 
-    # 6. Cap at Excel's 32,767 limit
+    # 7. Cap at Excel's 32,767 limit
     return s[:32767]
 
 def sanitize_numeric(val):
     if pd.isna(val) or val is None or val == "":
+        return ""
+    if isinstance(val, bool):
         return ""
     if isinstance(val, (int, float, np.number)):
         if np.isnan(val):
@@ -202,11 +208,14 @@ def process_auction_data(app_dir, asset_dir):
     except Exception as e:
         raise ValueError(f"ERROR reading the Excel file: {e}")
 
+    # Drop rows that are entirely NaN/empty
+    df_dump = df_dump.dropna(how='all')
+
     if df_dump.empty:
         raise ValueError("No data found in 'Lots' sheet.")
 
     # Clean column headers: strip whitespace and UTF-8 BOM
-    df_dump.columns = [str(col).strip().lstrip('\ufeff') for col in df_dump.columns]
+    df_dump.columns = [str(col).replace('\ufeff', '').strip() for col in df_dump.columns]
 
     template_cols = [
         'title_en', 'title_de', 'title_fr', 'title_nl', 'title_it', 'title_es', 'title_sv', 'title_pl', 

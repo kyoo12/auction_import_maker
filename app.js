@@ -217,34 +217,47 @@ const dropzone = document.getElementById('dropzone');
         // Multi-line sanitization (for description_* fields)
         function sanitizeMultiLine(val) {
             if (val === null || val === undefined) return '';
-            if (typeof val === 'number') {
+            if (typeof val === 'boolean') {
+                val = String(val);
+            } else if (typeof val === 'number') {
                 if (isNaN(val)) return '';
                 val = String(val);
             }
             let s = String(val);
             
-            // 1. Decode OpenXML hex entities (handling double-escaped _x005F_ first)
-            while (/_x005[fF]_x([0-9a-fA-F]{4})_/i.test(s)) {
-                s = s.replace(/_x005[fF]_x([0-9a-fA-F]{4})_/gi, (_, hex) => '_x' + hex + '_');
+            // 1. Unwrap double-escaped OpenXML control hex entities (e.g. _x005F_x000D_ -> _x000D_)
+            while (/_x005[fF]_x(000[dDaA9]|00[01][0-9a-fA-F]|005[fF])_/i.test(s)) {
+                s = s.replace(/_x005[fF]_x(000[dDaA9]|00[01][0-9a-fA-F]|005[fF])_/gi, (_, hex) => '_x' + hex + '_');
             }
             s = s.replace(/_x005[fF]_/gi, '_');
-            s = s.replace(/_x([0-9a-fA-F]{4})_/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
-            s = s.replace(/_x000[dD]_?/gi, '\r');
-            
-            // 2. Eliminate \r, \r\n, \u2028, \u2029 -> normalize to clean \n
-            s = s.replace(/\r\n/g, '\n').replace(/[\r\u2028\u2029]/g, '\n');
-            
-            // 3. Clean non-breaking and Unicode spaces
+
+            // 2. Decode OpenXML control entities:
+            // LF entity -> \n
+            s = s.replace(/_x000[aA]_/gi, '\n');
+            // CR entity -> \r
+            s = s.replace(/_x000[dD]_/gi, '\r');
+            // Strip other invalid XML control entities (0000-001F except 0009 tab)
+            s = s.replace(/_x00(?:0[0-8b-ce-f]|1[0-9a-f])_/gi, '');
+
+            // 3. Normalize all line endings:
+            // Convert Unicode line/paragraph separators to \n
+            s = s.replace(/[\u2028\u2029]/g, '\n');
+            // Normalize combinations of \r and \n:
+            // Any sequence of \r optionally followed by \n becomes a single \n
+            // (e.g. \r\n -> \n, \r\r\n -> \n, isolated \r -> \n)
+            s = s.replace(/\r+\n?/g, '\n');
+
+            // 4. Clean non-breaking and Unicode spaces
             s = s.replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ');
-            
-            // 4. Strip zero-width and invisible control characters (preserve \n)
+
+            // 5. Strip zero-width and invisible control characters (preserve \n and \t)
             s = s.replace(/[\u200B-\u200D\uFEFF\u2060\u180E]/g, '');
             s = s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '');
-            
-            // 5. Trim
+
+            // 6. Trim leading/trailing whitespace
             s = s.trim();
-            
-            // 6. Cap at Excel's 32,767 limit
+
+            // 7. Cap at Excel's 32,767 limit
             if (s.length > 32767) {
                 s = s.slice(0, 32767);
             }
@@ -254,34 +267,39 @@ const dropzone = document.getElementById('dropzone');
         // Single-line sanitization (for title_*, brand, attribute-*, number, subcategory, seller, location, etc.)
         function sanitizeSingleLine(val) {
             if (val === null || val === undefined) return '';
+            if (typeof val === 'boolean') {
+                return String(val);
+            }
             // Preserve numeric types directly
             if (typeof val === 'number') {
                 return isNaN(val) ? '' : val;
             }
             let s = String(val);
             
-            // 1. Decode OpenXML hex entities
-            while (/_x005[fF]_x([0-9a-fA-F]{4})_/i.test(s)) {
-                s = s.replace(/_x005[fF]_x([0-9a-fA-F]{4})_/gi, (_, hex) => '_x' + hex + '_');
+            // 1. Unwrap double-escaped OpenXML control hex entities
+            while (/_x005[fF]_x(000[dDaA9]|00[01][0-9a-fA-F]|005[fF])_/i.test(s)) {
+                s = s.replace(/_x005[fF]_x(000[dDaA9]|00[01][0-9a-fA-F]|005[fF])_/gi, (_, hex) => '_x' + hex + '_');
             }
             s = s.replace(/_x005[fF]_/gi, '_');
-            s = s.replace(/_x([0-9a-fA-F]{4})_/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
-            s = s.replace(/_x000[dD]_?/gi, ' ');
-            
-            // 2. Collapse internal newlines and line breaks to spaces
+
+            // 2. Control entities -> spaces (for CR/LF/Tab) or stripped
+            s = s.replace(/_x000[dDaA9]_/gi, ' ');
+            s = s.replace(/_x00(?:0[0-8b-ce-f]|1[0-9a-f])_/gi, '');
+
+            // 3. Collapse internal newlines and line breaks to spaces
             s = s.replace(/[\r\n\u2028\u2029\t]+/g, ' ');
-            
-            // 3. Clean non-breaking and Unicode spaces
+
+            // 4. Clean non-breaking and Unicode spaces
             s = s.replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ');
-            
-            // 4. Strip zero-width and invisible control characters
+
+            // 5. Strip zero-width and invisible control characters
             s = s.replace(/[\u200B-\u200D\uFEFF\u2060\u180E]/g, '');
             s = s.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
-            
-            // 5. Collapse multiple spaces and trim
+
+            // 6. Collapse multiple spaces and trim
             s = s.replace(/ +/g, ' ').trim();
-            
-            // 6. Cap at Excel's 32,767 limit
+
+            // 7. Cap at Excel's 32,767 limit
             if (s.length > 32767) {
                 s = s.slice(0, 32767);
             }
@@ -291,6 +309,7 @@ const dropzone = document.getElementById('dropzone');
         // Sanitizes numeric values (starting_bid, estimated_price, reserve_bid, vat_percentage, fee_vat_percentage, attribute-amount, attribute-buy_amount)
         function sanitizeNumeric(val) {
             if (val === null || val === undefined || val === '') return '';
+            if (typeof val === 'boolean') return '';
             if (typeof val === 'number') {
                 return isNaN(val) ? '' : val;
             }
@@ -305,7 +324,7 @@ const dropzone = document.getElementById('dropzone');
             if (val === null || val === undefined || val === '') return '';
             if (val === true || val === 1 || val === '1') return 1;
             const s = String(val).trim().toLowerCase();
-            if (s === 'true' || s === '1' || s === 'yes' || s === 'y') return 1;
+            if (s === 'true' || s === '1' || s === '1.0' || s === 'yes' || s === 'y') return 1;
             return '';
         }
 
@@ -341,11 +360,11 @@ const dropzone = document.getElementById('dropzone');
                 throw new Error("No data found in 'Lots' sheet.");
             }
 
-            // Clean up column headers in rawJson: strip leading/trailing whitespace and UTF-8 BOM (\uFEFF)
+            // Clean up column headers in rawJson: strip whitespace and UTF-8 BOM (\uFEFF)
             const json = rawJson.map(row => {
                 const cleanRow = {};
                 for (const [key, value] of Object.entries(row)) {
-                    const cleanKey = String(key).trim().replace(/^\uFEFF/, '');
+                    const cleanKey = String(key).replace(/\uFEFF/g, '').trim();
                     cleanRow[cleanKey] = value;
                 }
                 return cleanRow;

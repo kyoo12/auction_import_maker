@@ -25,9 +25,13 @@ def test_multi_line_sanitization():
     # OpenXML hex entity _x000D_
     assert sanitize_multi_line("Line 1_x000D_\nLine 2") == "Line 1\nLine 2"
     assert sanitize_multi_line("Line 1_x000d_Line 2") == "Line 1\nLine 2"
+    assert sanitize_multi_line("Line 1_x000d_\r\nLine 2") == "Line 1\nLine 2"
     # Double-escaped OpenXML hex entity _x005F_x000D_
     assert sanitize_multi_line("Line 1_x005F_x000D_\nLine 2") == "Line 1\nLine 2"
     assert sanitize_multi_line("Line 1_x005F_x000D_Line 2") == "Line 1\nLine 2"
+    # Part numbers and text with _xXXXX_ must NEVER be corrupted
+    assert sanitize_multi_line("BATTERY_x2000_MAX") == "BATTERY_x2000_MAX"
+    assert sanitize_multi_line("MODEL_x1234_ABC") == "MODEL_x1234_ABC"
     # Unicode line separators \u2028, \u2029 -> \n
     assert sanitize_multi_line("Line 1\u2028Line 2\u2029Line 3") == "Line 1\nLine 2\nLine 3"
     # Unicode spaces -> ' '
@@ -52,6 +56,11 @@ def test_single_line_sanitization():
     # OpenXML hex entities
     assert sanitize_single_line("Brand_x000D_\nName") == "Brand Name"
     assert sanitize_single_line("Brand_x005F_x000D_Name") == "Brand Name"
+    assert sanitize_single_line("Brand_x005F_REV1") == "Brand_REV1"
+    # Part numbers, model codes, serial numbers with _xXXXX_ must NEVER be corrupted
+    assert sanitize_single_line("BATTERY_x2000_MAX") == "BATTERY_x2000_MAX"
+    assert sanitize_single_line("MODEL_x1234_ABC") == "MODEL_x1234_ABC"
+    assert sanitize_single_line("SN_x0041_123") == "SN_x0041_123"
     # Multiple spaces collapsed & trimmed
     assert sanitize_single_line("   Brand   with    spaces   ") == "Brand with spaces"
     # Numbers preserved
@@ -82,6 +91,9 @@ def test_numeric_sanitization():
     assert type(sanitize_numeric("0")) is int
     assert sanitize_numeric(" 150.5 ") == 150.5
     assert type(sanitize_numeric(" 150.5 ")) is float
+    # Booleans are not numeric bids/prices
+    assert sanitize_numeric(True) == ""
+    assert sanitize_numeric(False) == ""
     # Empty / None / NaN
     assert sanitize_numeric("") == ""
     assert sanitize_numeric(None) == ""
@@ -95,6 +107,7 @@ def test_binary_conversion():
     assert convert_to_binary(1) == 1
     assert convert_to_binary('1') == 1
     assert convert_to_binary('1.0') == 1
+    assert convert_to_binary(1.0) == 1
     assert convert_to_binary(True) == 1
     assert convert_to_binary('true') == 1
     assert convert_to_binary('True') == 1
@@ -126,29 +139,31 @@ def test_end_to_end_auction_data():
         # 8. SerialNumber with leading zeroes '00042'
         
         raw_data = {
-            '\ufeffTitle': [
+            ' \ufeff Title ': [
                 'Item 1 with\r\nNewline in Title',
                 'Item 2_x000D_\nWith CR',
-                'Item 3\u2028With LineSep'
+                'Item 3\u2028With LineSep',
+                None
             ],
             'Description': [
                 'Line 1_x005F_x000D_\nLine 2\r\nLine 3\u00A0nonbreak',
                 'Desc with clean \n newline\r\nand CRLF',
-                'Desc 3\u200Bwith zero width'
+                'Desc 3\u200Bwith zero width',
+                None
             ],
-            'Lotnumber': [1, 2, '3A'],
-            ' StartingBid ': [0, 150.5, ' 250.75 '],
-            'EstimatedPrice': [100, 200, 300],
-            'ReserveBid': [0, 120.0, 250],
-            'CategoryDomeId': [10, 20, 30],
-            'Brand': ['Cat\r\nEquipment', 'Volvo_x000D_Truck', 'Scania\u00A0Co'],
-            'Type': ['Excavator\nType', 'Truck', 'Loader'],
-            'Year': [2020, 2021, 2022],
-            'SerialNumber': ['SN-0001', 'SN-0002', 'SN-0003'],
-            'Amount': [1, 2, 3],
-            'BuyAmount': [1, 2, 3],
-            'Allocation': ['1', '0', True],
-            'Spotlight': [True, 'true', '1']
+            'Lotnumber': [1, 2, '3A', None],
+            ' StartingBid ': [0, 150.5, ' 250.75 ', None],
+            'EstimatedPrice': [100, 200, 300, None],
+            'ReserveBid': [0, 120.0, 250, None],
+            'CategoryDomeId': [10, 20, 30, None],
+            'Brand': ['Cat\r\nEquipment', 'BATTERY_x2000_MAX', 'Scania\u00A0Co', None],
+            'Type': ['Excavator\nType', 'Truck', 'Loader', None],
+            'Year': [2020, 2021, 2022, None],
+            'SerialNumber': ['SN-0001', 'SN-0002', 'SN-0003', None],
+            'Amount': [1, 2, 3, None],
+            'BuyAmount': [1, 2, 3, None],
+            'Allocation': ['1', '0', True, None],
+            'Spotlight': [True, 'true', '1', None]
         }
         raw_df = pd.DataFrame(raw_data)
         input_file = os.path.join(temp_dir, 'raw_dump.xlsx')
@@ -166,6 +181,10 @@ def test_end_to_end_auction_data():
         wb = openpyxl.load_workbook(output_file)
         ws = wb.active
         
+        # Verify only 3 data rows created (trailing empty row dropped!)
+        data_rows = list(ws.iter_rows(min_row=2, values_only=True))
+        assert len(data_rows) == 3, f"Expected 3 rows, got {len(data_rows)}"
+
         headers = [cell.value for cell in ws[1]]
         # Verify template column order
         import json
@@ -213,6 +232,8 @@ def test_end_to_end_auction_data():
         row2_vals = [cell.value for cell in ws[3]]
         sb2 = row2_vals[col_idx['starting_bid']]
         assert sb2 == 150.5 and type(sb2) is float, f"starting_bid 150.5 got: {sb2} ({type(sb2)})"
+        b2 = row2_vals[col_idx['brand']]
+        assert b2 == 'BATTERY_x2000_MAX', f"Brand BATTERY got corrupted: {b2}"
         
         # Row 3 (ws row 4): string ' 250.75 ' converted to numeric 250.75
         row3_vals = [cell.value for cell in ws[4]]

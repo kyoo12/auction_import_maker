@@ -45,9 +45,13 @@ assert.strictEqual(sanitizeMultiLine("Line 1\rLine 2"), "Line 1\nLine 2");
 // OpenXML hex entity _x000D_
 assert.strictEqual(sanitizeMultiLine("Line 1_x000D_\nLine 2"), "Line 1\nLine 2");
 assert.strictEqual(sanitizeMultiLine("Line 1_x000d_Line 2"), "Line 1\nLine 2");
+assert.strictEqual(sanitizeMultiLine("Line 1_x000d_\r\nLine 2"), "Line 1\nLine 2");
 // Double-escaped OpenXML hex entity _x005F_x000D_
 assert.strictEqual(sanitizeMultiLine("Line 1_x005F_x000D_\nLine 2"), "Line 1\nLine 2");
 assert.strictEqual(sanitizeMultiLine("Line 1_x005F_x000D_Line 2"), "Line 1\nLine 2");
+// Part numbers and text with _xXXXX_ must NEVER be corrupted
+assert.strictEqual(sanitizeMultiLine("BATTERY_x2000_MAX"), "BATTERY_x2000_MAX");
+assert.strictEqual(sanitizeMultiLine("MODEL_x1234_ABC"), "MODEL_x1234_ABC");
 // Unicode line separators \u2028, \u2029 -> \n
 assert.strictEqual(sanitizeMultiLine("Line 1\u2028Line 2\u2029Line 3"), "Line 1\nLine 2\nLine 3");
 // Unicode spaces -> ' '
@@ -69,6 +73,11 @@ assert.strictEqual(sanitizeSingleLine("Title\u2028Line 2\u2029Line 3"), "Title L
 // OpenXML hex entities
 assert.strictEqual(sanitizeSingleLine("Brand_x000D_\nName"), "Brand Name");
 assert.strictEqual(sanitizeSingleLine("Brand_x005F_x000D_Name"), "Brand Name");
+assert.strictEqual(sanitizeSingleLine("Brand_x005F_REV1"), "Brand_REV1");
+// Part numbers, model codes, serial numbers with _xXXXX_ must NEVER be corrupted
+assert.strictEqual(sanitizeSingleLine("BATTERY_x2000_MAX"), "BATTERY_x2000_MAX");
+assert.strictEqual(sanitizeSingleLine("MODEL_x1234_ABC"), "MODEL_x1234_ABC");
+assert.strictEqual(sanitizeSingleLine("SN_x0041_123"), "SN_x0041_123");
 // Multiple spaces collapsed & trimmed
 assert.strictEqual(sanitizeSingleLine("   Brand   with    spaces   "), "Brand with spaces");
 // Numbers preserved
@@ -93,6 +102,9 @@ assert.strictEqual(sanitizeNumeric("0"), 0);
 assert.strictEqual(typeof sanitizeNumeric("0"), 'number');
 assert.strictEqual(sanitizeNumeric(" 150.5 "), 150.5);
 assert.strictEqual(typeof sanitizeNumeric(" 150.5 "), 'number');
+// Booleans are not numeric bids/prices
+assert.strictEqual(sanitizeNumeric(true), "");
+assert.strictEqual(sanitizeNumeric(false), "");
 // Empty / null / undefined / NaN
 assert.strictEqual(sanitizeNumeric(""), "");
 assert.strictEqual(sanitizeNumeric(null), "");
@@ -105,6 +117,8 @@ console.log("[OK] JS numeric sanitization passed!");
 console.log("Testing JS binary conversion...");
 assert.strictEqual(convertToBinary(1), 1);
 assert.strictEqual(convertToBinary('1'), 1);
+assert.strictEqual(convertToBinary('1.0'), 1);
+assert.strictEqual(convertToBinary(1.0), 1);
 assert.strictEqual(convertToBinary(true), 1);
 assert.strictEqual(convertToBinary('true'), 1);
 assert.strictEqual(convertToBinary('True'), 1);
